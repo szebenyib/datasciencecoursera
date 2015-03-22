@@ -48,27 +48,44 @@ rankall <- function(outcome, num = "best") {
     lengths[[state]] <- nrow(df)
   }
 
-  if (num == "best") {
-    id <- 1
-  } else if (num == "worst") {
-    id <- max(lengths)
-  } else if (num > max(lengths)) {
-    id <- num #will return NA later
-  } else {
-    id <- num
-  }
-  
   # Returned the ranked item or NA if num is too big
-  if (id <= max(lengths)) {
-    hospital_list <- NULL
-    state_list <- NULL
+  hospital_list <- NULL
+  state_list <- NULL
+  if (num == "best") {
     for (state in states) {
-      hospital <- as.character(as.data.frame(ordered_df[state])[id, c(2)])
+      hospital <- as.character(as.data.frame(ordered_df[state])[1, c(2)])
       hospital_list <- c(hospital_list, hospital)
       state_list <- c(state_list, state)#as.character(as.data.frame(ordered_df[state])[id, c(7)]))
     }
     ranklist <- cbind(hospital_list, state_list)
     ranklist <- ranklist[order(ranklist[ , 2]), ]
+    rownames(ranklist) <- state_list
+    colnames(ranklist) <- c("hospital", "state")
+    ranklist <- data.frame(ranklist)
+    return(ranklist)
+  } else if (num == "worst") {
+    for (state in states) {
+      hospital <- as.character(as.data.frame(ordered_df[state])[lengths[state], c(2)])
+      hospital_list <- c(hospital_list, hospital)
+      state_list <- c(state_list, state)#as.character(as.data.frame(ordered_df[state])[id, c(7)]))
+    }
+    ranklist <- cbind(hospital_list, state_list)
+    ranklist <- ranklist[order(ranklist[ , 2]), ]
+    rownames(ranklist) <- state_list
+    colnames(ranklist) <- c("hospital", "state")
+    ranklist <- data.frame(ranklist)
+    return(ranklist)
+  } else if (num <= max(lengths)){
+    for (state in states) {
+      hospital <- as.character(as.data.frame(ordered_df[state])[num, c(2)])
+      hospital_list <- c(hospital_list, hospital)
+      state_list <- c(state_list, state)#as.character(as.data.frame(ordered_df[state])[id, c(7)]))
+    }
+    ranklist <- cbind(hospital_list, state_list)
+    ranklist <- ranklist[order(ranklist[ , 2]), ]
+    rownames(ranklist) <- state_list
+    colnames(ranklist) <- c("hospital", "state")
+    ranklist <- data.frame(ranklist)
     return(ranklist)
   } else {
     return(NA)
