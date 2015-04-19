@@ -20,31 +20,37 @@ merge_x_y_subject_and_append_status <- function(x_file,
                                                  y_file,
                                                  subject_file,
                                                  training = TRUE) {
-  #Read x_file and append training column with status from signature
+  #Read the files
   dt_x <- read.table(file = x_file)
-  number_of_observations <- dim(dt_x)[1]
-  dt_x <- cbind(dt_x, rep(training, number_of_observations))
-  column_names <- colnames(dt_x)
-  column_names[length(column_names)] <- "training"
-  colnames(dt_x) <- column_names
-  
-  #Read y_file and subject file
-  dt_y <- read.table(file = y_file)
+  dt_y_id <- read.table(file = y_file)
+  dt_y_name <- read.table(file = "UCI HAR Dataset//activity_labels.txt")
   dt_subject <- read.table(file = subject_file)
+  
+  #Use activity names instead of ids
+  dt_y <- merge(x = dt_y_id, y = dt_y_name, by.x = "V1", by.y = "V1")
+  dt_y <- dt_y[2]
   
   #Merge them
   dt <- cbind(dt_x, dt_y, dt_subject)
+
+  #Add training info column
+  dt <- cbind(dt, rep(training, dim(dt)[1]))
+  
+  #Add column names
+  cnames <- read.table("UCI HAR Dataset//features.txt",
+                       stringsAsFactors = FALSE)
+  colnames(dt) <- c(unlist(cnames[2]), "activityType", "subject", "isTraining")
   
   return(dt)
 }
 
-dt_train <- merge_x_y_subject_and_append_status(x_file = "UCI HAR Dataset/train/X_train.txt",
-                                    y_file = "UCI HAR Dataset/train/y_train.txt",
-                                    subject_file = "UCI HAR Dataset/train/subject_train.txt",
+dt_train <- merge_x_y_subject_and_append_status(x_file = "UCI HAR Dataset//train//X_train.txt",
+                                    y_file = "UCI HAR Dataset//train//y_train.txt",
+                                    subject_file = "UCI HAR Dataset//train//subject_train.txt",
                                     training = TRUE)
-dt_test <- merge_x_y_subject_and_append_status(x_file = "UCI HAR Dataset/test/X_test.txt",
-                                               y_file = "UCI HAR Dataset/test/y_test.txt",
-                                               subject_file = "UCI HAR Dataset/test/subject_test.txt",
+dt_test <- merge_x_y_subject_and_append_status(x_file = "UCI HAR Dataset//test//X_test.txt",
+                                               y_file = "UCI HAR Dataset//test//y_test.txt",
+                                               subject_file = "UCI HAR Dataset//test//subject_test.txt",
                                                training = FALSE)
 #Merging and freeing up ram
 dt <- rbind(dt_train, dt_test)
@@ -52,6 +58,7 @@ rm(list=c("dt_train", "dt_test"))
 
 #Extracting measurements on the mean and standard deviation for each
 #measurement
+
 
 #Applying descriptive activity names
 
