@@ -45,6 +45,11 @@ To load the data set use:
 The variables
 =============
 
+All variables are in the unit of their origin as it is described in the
+documentation of the original files. All other variables added by the
+script are detailed below and do not have units that would need a
+scale indication of measure (e.g. ther is no: mm - cm - dm - m -km).
+
 Data set for questions 1, 2, 3, 4 (not uploaded)
 ------------------------------------------------
 
