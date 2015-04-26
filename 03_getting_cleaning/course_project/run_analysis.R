@@ -7,11 +7,16 @@
 #downloaded from here: https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip
 #extracted in the directory where the script resides.
 
-#Part 0: Setup
-#Setting up working directory to be able to access files.
-setwd(dirname(sys.frame(1)$ofile))
+#"dt" as a data table is the clean data set as requested per questions 1-4
+#"desc" as a data frame is the clean data set for question 5
 
-#Part 1: Merging training and testing sets.
+#__Part 0: Setup__
+#Setting up working directory to be able to access files
+setwd(dirname(sys.frame(1)$ofile))
+#The following libraries are needed for the script to function properly
+library(reshape)
+
+#__Part 1: Merging training and testing sets__
 #First reading the x file in and appending training status (TRUE or FALSE),
 #then reading in the two other files and appending data from them.
 #@returns: a merged dataset
@@ -25,22 +30,32 @@ merge_x_y_subject_and_append_status <- function(x_file,
   dt_y_name <- read.table(file = "UCI HAR Dataset//activity_labels.txt")
   dt_subject <- read.table(file = subject_file)
   
-  #Part 3: applying descriptive activity names
+  #__Part 3: applying descriptive activity names__
   #Use activity names instead of ids
-  dt_y <- merge(x = dt_y_id, y = dt_y_name, by.x = "V1", by.y = "V1")
+  dt_y <- merge(x = dt_y_id,
+                y = dt_y_name,
+                by.x = "V1",
+                by.y = "V1")
   dt_y <- dt_y[2]
   
   #Merge them
-  dt <- cbind(dt_x, dt_y, dt_subject)
+  dt <- cbind(dt_x,
+              dt_y,
+              dt_subject)
 
   #Add training info column
-  dt <- cbind(dt, rep(training, dim(dt)[1]))
+  dt <- cbind(dt,
+              rep(training,
+                  dim(dt)[1]))
   
-  #Part 4: Labeling the data set with descriptive variable names
+  #__Part 4: Labeling the data set with descriptive variable names__
   #Add column names
   cnames <- read.table("UCI HAR Dataset//features.txt",
                        stringsAsFactors = FALSE)
-  colnames(dt) <- c(unlist(cnames[2]), "activityType", "subject", "isTraining")
+  colnames(dt) <- c(unlist(cnames[2]),
+                    "activityType",
+                    "subject",
+                    "isTraining")
   
   return(dt)
 }
@@ -54,53 +69,71 @@ dt_test <- merge_x_y_subject_and_append_status(x_file = "UCI HAR Dataset//test//
                                                subject_file = "UCI HAR Dataset//test//subject_test.txt",
                                                training = FALSE)
 #Merging and freeing up ram
-dt <- rbind(dt_train, dt_test)
-rm(list=c("dt_train", "dt_test"))
+dt <- rbind(dt_train,
+            dt_test)
+rm(list=c("dt_train",
+          "dt_test",
+          "merge_x_y_subject_and_append_status"))
 
-#Part 2 :Extracting measurements on the mean and standard deviation for each
-#measurement
+#__Part 2 :Extracting measurements on the mean and standard deviation
+#for each measurement__
 
+#Select columns by whether their names contain "mean" or "std"
 cnames <- colnames(dt)
-means <- grepl("mean", cnames)
-stds <- grepl("std", cnames)
+means <- grepl("mean",
+               cnames)
+stds <- grepl("std",
+              cnames)
 #If any of them are TRUE, mark them as TRUE
 both <- means | stds
+dt <- cbind(dt[both],
+            dt$activityType,
+            dt$subject,
+            dt$isTraining)
+rm(list=c("means",
+          "stds",
+          "both"))
+write.table(x = dt,
+            file = "step1234_data_set.txt",
+            row.names = FALSE)
 
-dt <- cbind(dt[both], dt$activityType, dt$subject, dt$isTraining)
+#__Part 5 : Creating a tidy data set with the average of
+#each variable for each activity and each subject__
 
-#Part 5 : Creating a tidy data set with the average of
-#each variable for each activity and each subject
+#How many columns to iterate over
 ncolumns <- dim(dt)[2] - 3 #last three are not sensor data
 cnames <- colnames(dt)
+
+#Iterate over the columns and find the average of the values
+#in each column for each activity-subject pair then put
+#them in a data frame and reshape them so that
+#its structure is "activityType", "subject", "averageOfVariable", "value"
+#and append that together.
 desc <- NULL
-dimnames <- tapply(X = unlist(dt[1]),
-                   INDEX = list(unlist(dt[80]),
-                                unlist(dt[81])),
-                   FUN = mean)
 for (i in 1:ncolumns) {
-  desc <- cbind(desc, 
-                c(unlist(tapply(X = unlist(dt[i]),
-                                INDEX = list(unlist(dt[80]),
-                                             unlist(dt[81])),
-                                FUN = mean)
-                         ),
-                  unlist(tapply(X = unlist(dt[i]),
-                                INDEX = list(unlist(dt[80]),
-                                             unlist(dt[81])),
-                                FUN = sd)
-                         )
-                  )
-                )
+  new_matrix <- unlist(tapply(X = unlist(dt[i]),
+                            INDEX = list(unlist(dt[80]),
+                                         unlist(dt[81])),
+                            FUN = mean))
+  new_df <- as.data.frame(new_matrix)
+  new_df$activityType <- rownames(new_df)
+  reshaped_df <- melt(new_df,
+                      id=c("activityType"))
+  reshaped_df$variable_name <- cnames[i]
+  desc <- rbind(desc, 
+                reshaped_df)
 }
-#Rename the rows
-rnames <- rownames(desc)
-for (i in 1:12) {
-  if (i <= 6) {
-    rnames[i] <- paste("MEAN_", rnames[i], sep="")
-  } else {
-    rnames[i] <- paste("SD_", rnames[i], sep="")
-  }
-}
-#rownames(desc) <- rnames
-#Rename the columns
-colnames(desc) <- cnames[1:79]
+#Removing unnecessary objects
+rm(list=c("i",
+          "ncolumns",
+          "cnames",
+          "new_matrix",
+          "new_df",
+          "reshaped_df"))
+colnames(desc) <- c("activityType",
+                    "subject",
+                    "averageOfVariable",
+                    "variableName")
+write.table(x = desc,
+            file = "step5_data_set.txt",
+            row.names = FALSE)
