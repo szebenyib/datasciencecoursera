@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="author" content="Balint SZEBENYI" />
+
+<meta name="date" content="2015-05-22" />
+
+<title>Exploratory data analysis - Course Project 2</title>
+
+<script src="explo_course_project_2_files/jquery-1.11.0/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link href="explo_course_project_2_files/bootstrap-2.3.2/css/bootstrap.min.css" rel="stylesheet" />
+<link href="explo_course_project_2_files/bootstrap-2.3.2/css/bootstrap-responsive.min.css" rel="stylesheet" />
+<script src="explo_course_project_2_files/bootstrap-2.3.2/js/bootstrap.min.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<link rel="stylesheet"
+      href="explo_course_project_2_files/highlight/default.css"
+      type="text/css" />
+<script src="explo_course_project_2_files/highlight/highlight.js"></script>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs && document.readyState && document.readyState === "complete") {
+   window.setTimeout(function() {
+      hljs.initHighlighting();
+   }, 0);
+}
+</script>
+
+
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+</style>
+<div class="container-fluid main-container">
+
+
+<div id="header">
+<h1 class="title">Exploratory data analysis - Course Project 2</h1>
+<h4 class="author"><em>Balint SZEBENYI</em></h4>
+<h4 class="date"><em>2015-05-22</em></h4>
+</div>
+
+
+<div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p>This document collects all the plots relevant to answer the questions of the course project of the Coursera course: Exploratory Data Analysis.</p>
+<p>The dataset contains emission information about fine particulate matter. This collected data is used to analyze potential harmful effects based on measurements from 1999, 2002, 2005, 2008.</p>
+<p><em>Please note, I have decided to include every knitr output to make it easier to see what is going on in the background.</em></p>
+</div>
+<div id="r-setup" class="section level1">
+<h1>R Setup</h1>
+<p>Libraries</p>
+<pre class="r"><code>library(knitr) #markdown
+library(lattice) #plotting
+library(data.table) #big tables
+library(stringr) #string_match
+library(ggplot2) #ggplot2
+library(scales) #ggplot2 scientific notation disabling
+library(xtable) #table output</code></pre>
+<p>Setup working directory and figures location</p>
+<pre class="r"><code>working_dir &lt;- &quot;/home/szebenyib/explo/project_02/&quot;
+opts_chunk$set(fig.path=&quot;figure/&quot;)</code></pre>
+<p>Localization of units</p>
+<pre class="r"><code>Sys.setlocale(&quot;LC_TIME&quot;, &quot;C&quot;)</code></pre>
+<pre><code>## [1] &quot;C&quot;</code></pre>
+</div>
+<div id="loading-and-preprocessing-the-data" class="section level1">
+<h1>Loading and preprocessing the data</h1>
+<p>The necessary zip file will be downloaded, unzipped and loaded into variables.</p>
+<pre class="r"><code>filename &lt;- &quot;NEI_data.zip&quot;
+full_path &lt;- paste(working_dir,
+                   filename,
+                   sep = &quot;&quot;)
+if (!file.exists(full_path)) {
+  download.file(url = &quot;https://d396qusza40orc.cloudfront.net/exdata%2Fdata%2FNEI_data.zip&quot;,
+                destfile = full_path, 
+                method = &quot;curl&quot;)
+  unzip(zipfile = full_path,
+        exdir = working_dir)
+}
+nei &lt;- readRDS(file = paste(working_dir,
+                            &quot;summarySCC_PM25.rds&quot;,
+                            sep = &quot;&quot;))
+scc &lt;- readRDS(file = paste(working_dir,
+                            &quot;Source_Classification_Code.rds&quot;,
+                            sep = &quot;&quot;))</code></pre>
+<p>A brief overview of the data frames:</p>
+<pre class="r"><code>str(nei)</code></pre>
+<pre><code>## &#39;data.frame&#39;:    6497651 obs. of  6 variables:
+##  $ fips     : chr  &quot;09001&quot; &quot;09001&quot; &quot;09001&quot; &quot;09001&quot; ...
+##  $ SCC      : chr  &quot;10100401&quot; &quot;10100404&quot; &quot;10100501&quot; &quot;10200401&quot; ...
+##  $ Pollutant: chr  &quot;PM25-PRI&quot; &quot;PM25-PRI&quot; &quot;PM25-PRI&quot; &quot;PM25-PRI&quot; ...
+##  $ Emissions: num  15.714 234.178 0.128 2.036 0.388 ...
+##  $ type     : chr  &quot;POINT&quot; &quot;POINT&quot; &quot;POINT&quot; &quot;POINT&quot; ...
+##  $ year     : int  1999 1999 1999 1999 1999 1999 1999 1999 1999 1999 ...</code></pre>
+<pre class="r"><code>table &lt;- xtable(head(nei))
+print(table,
+      type = &quot;html&quot;)</code></pre>
+<!-- html table generated in R 3.1.3 by xtable 1.7-4 package -->
+<!-- Sun May 24 11:58:05 2015 -->
+<table border=1>
+<tr> <th>  </th> <th> 
+fips
+</th> <th> 
+SCC
+</th> <th> 
+Pollutant
+</th> <th> 
+Emissions
+</th> <th> 
+type
+</th> <th> 
+year
+</th>  </tr>
+  <tr> <td align="right"> 
+4
+</td> <td> 
+09001
+</td> <td> 
+10100401
+</td> <td> 
+PM25-PRI
+</td> <td align="right"> 
+15.71
+</td> <td> 
+POINT
+</td> <td align="right"> 
+1999
+</td> </tr>
+  <tr> <td align="right"> 
+8
+</td> <td> 
+09001
+</td> <td> 
+10100404
+</td> <td> 
+PM25-PRI
+</td> <td align="right"> 
+234.18
+</td> <td> 
+POINT
+</td> <td align="right"> 
+1999
+</td> </tr>
+  <tr> <td align="right"> 
+12
+</td> <td> 
+09001
+</td> <td> 
+10100501
+</td> <td> 
+PM25-PRI
+</td> <td align="right"> 
+0.13
+</td> <td> 
+POINT
+</td> <td align="right"> 
+1999
+</td> </tr>
+  <tr> <td align="right"> 
+16
+</td> <td> 
+09001
+</td> <td> 
+10200401
+</td> <td> 
+PM25-PRI
+</td> <td align="right"> 
+2.04
+</td> <td> 
+POINT
+</td> <td align="right"> 
+1999
+</td> </tr>
+  <tr> <td align="right"> 
+20
+</td> <td> 
+09001
+</td> <td> 
+10200504
+</td> <td> 
+PM25-PRI
+</td> <td align="right"> 
+0.39
+</td> <td> 
+POINT
+</td> <td align="right"> 
+1999
+</td> </tr>
+  <tr> <td align="right"> 
+24
+</td> <td> 
+09001
+</td> <td> 
+10200602
+</td> <td> 
+PM25-PRI
+</td> <td align="right"> 
+1.49
+</td> <td> 
+POINT
+</td> <td align="right"> 
+1999
+</td> </tr>
+   </table>
+
+<pre class="r"><code>str(scc)</code></pre>
+<pre><code>## &#39;data.frame&#39;:    11717 obs. of  15 variables:
+##  $ SCC                : Factor w/ 11717 levels &quot;10100101&quot;,&quot;10100102&quot;,..: 1 2 3 4 5 6 7 8 9 10 ...
+##  $ Data.Category      : Factor w/ 6 levels &quot;Biogenic&quot;,&quot;Event&quot;,..: 6 6 6 6 6 6 6 6 6 6 ...
+##  $ Short.Name         : Factor w/ 11238 levels &quot;&quot;,&quot;2,4-D Salts and Esters Prod /Process Vents, 2,4-D Recovery: Filtration&quot;,..: 3283 3284 3293 3291 3290 3294 3295 3296 3292 3289 ...
+##  $ EI.Sector          : Factor w/ 59 levels &quot;Agriculture - Crops &amp; Livestock Dust&quot;,..: 18 18 18 18 18 18 18 18 18 18 ...
+##  $ Option.Group       : Factor w/ 25 levels &quot;&quot;,&quot;C/I Kerosene&quot;,..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ Option.Set         : Factor w/ 18 levels &quot;&quot;,&quot;A&quot;,&quot;B&quot;,&quot;B1A&quot;,..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ SCC.Level.One      : Factor w/ 17 levels &quot;Brick Kilns&quot;,..: 3 3 3 3 3 3 3 3 3 3 ...
+##  $ SCC.Level.Two      : Factor w/ 146 levels &quot;&quot;,&quot;Agricultural Chemicals Production&quot;,..: 32 32 32 32 32 32 32 32 32 32 ...
+##  $ SCC.Level.Three    : Factor w/ 1061 levels &quot;&quot;,&quot;100% Biosolids (e.g., sewage sludge, manure, mixtures of these matls)&quot;,..: 88 88 156 156 156 156 156 156 156 156 ...
+##  $ SCC.Level.Four     : Factor w/ 6084 levels &quot;&quot;,&quot;(NH4)2 SO4 Acid Bath System and Evaporator&quot;,..: 4455 5583 4466 4458 1341 5246 5584 5983 4461 776 ...
+##  $ Map.To             : num  NA NA NA NA NA NA NA NA NA NA ...
+##  $ Last.Inventory.Year: int  NA NA NA NA NA NA NA NA NA NA ...
+##  $ Created_Date       : Factor w/ 57 levels &quot;&quot;,&quot;1/27/2000 0:00:00&quot;,..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ Revised_Date       : Factor w/ 44 levels &quot;&quot;,&quot;1/27/2000 0:00:00&quot;,..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ Usage.Notes        : Factor w/ 21 levels &quot;&quot;,&quot; &quot;,&quot;includes bleaching towers, washer hoods, filtrate tanks, vacuum pump exhausts&quot;,..: 1 1 1 1 1 1 1 1 1 1 ...</code></pre>
+</div>
+<div id="questions" class="section level1">
+<h1>Questions</h1>
+<div id="have-total-emissions-from-pm2.5-decreased-in-the-united-states-from-1999-to-2008" class="section level2">
+<h2>Have total emissions from PM2.5 decreased in the United States from 1999 to 2008?</h2>
+<p><strong>Using the base plotting system, make a plot showing the total PM2.5 emission from all sources for each of the years 1999, 2002, 2005, and 2008.</strong></p>
+<pre class="r"><code>total_emission_by_year &lt;- tapply(X = nei$Emissions,
+                                 INDEX = nei$year,
+                                 FUN = sum)
+plot(x = names(total_emission_by_year),
+     y = total_emission_by_year,
+     ylim = c(0, 8e6),
+#      type = &quot;l&quot;,
+     xlab = &quot;Years&quot;,
+     ylab = &quot;PM2.5 in million tons&quot;,
+     yaxt = &quot;n&quot;,
+     xaxt = &quot;n&quot;,
+     main = &quot;Total emission of PM2.5 in the U.S. between 1999 and 2008&quot;)
+at_x &lt;- names(total_emission_by_year)
+axis(1,
+     at = at_x,
+     labels = at_x,
+#      vadj = 1,
+     cex.axis = 0.8)
+at_y &lt;- seq(from = 0,
+              to = 7e6,
+              by = 1e6)
+axis(2,
+     at = at_y,
+     labels = format(at_y / 1000000,
+                     scientific = FALSE),
+     hadj = 0.9,
+     cex.axis = 0.8)
+grid()</code></pre>
+<p><img src="figure/unnamed-chunk-8.png" alt="plot of chunk unnamed-chunk-8" /></p>
+<pre class="r"><code>remove(total_emission_by_year)</code></pre>
+<p>As it can be deduced from the graph a negative trend is to be observed in the total amount of PM2.5. Therefore it can be concluded that the amount of PM2.5 has decreased in the U.S. in the observation period. However this conclusion is based only on four data points in this interval therefore it should be treated with caution.</p>
+</div>
+<div id="have-total-emissions-from-pm2.5-decreased-in-the-baltimore-city-maryland-fips-24510-from-1999-to-2008" class="section level2">
+<h2>Have total emissions from PM2.5 decreased in the Baltimore City, Maryland (fips == “24510”) from 1999 to 2008?</h2>
+<p><strong>Use the base plotting system to make a plot answering this question.</strong></p>
+<pre class="r"><code>total_emission_by_city_and_year &lt;- tapply(X = nei$Emissions,
+                                          INDEX = interaction(nei$fips,
+                                                              nei$year),
+                                          FUN = sum)
+row_ids_of_baltimore &lt;- grep(&quot;^24510&quot;,
+                             names(total_emission_by_city_and_year))
+total_emission_baltimore_per_year &lt;- total_emission_by_city_and_year[row_ids_of_baltimore]
+#keep only the years from eg.: 24510.1999 --&gt; 1999
+names(total_emission_baltimore_per_year) &lt;- substr(names(total_emission_baltimore_per_year),
+                                                   7,
+                                                   10)
+plot(x = names(total_emission_baltimore_per_year),
+     y = total_emission_baltimore_per_year,
+     ylim = c(0, 4000),
+#      type = &quot;l&quot;,
+     xlab = &quot;Years&quot;,
+     ylab = &quot;PM2.5 in tons&quot;,
+     yaxt = &quot;n&quot;,
+     xaxt = &quot;n&quot;,
+     main = &quot;Total emission of PM2.5 in Baltimore City, Maryland\nbetween 1999 and 2008&quot;)
+at_x &lt;- names(total_emission_baltimore_per_year)
+axis(1,
+     at = at_x,
+     labels = at_x,
+#      vadj = 1,
+     cex.axis = 0.8)
+at_y &lt;- seq(from = 0,
+              to = 4000,
+              by = 500)
+axis(2,
+     at = at_y,
+     labels = format(at_y,
+                     scientific = FALSE),
+     hadj = 0.5,
+     cex.axis = 0.8)
+grid()</code></pre>
+<p><img src="figure/unnamed-chunk-9.png" alt="plot of chunk unnamed-chunk-9" /></p>
+<pre class="r"><code>remove(total_emission_by_city_and_year,
+       row_ids_of_baltimore,
+       total_emission_baltimore_per_year)</code></pre>
+<p>The total PM2.5 emission in Baltimore City, Maryland cannot be confirmed to have seen a decrease. There are four accumulated observations for more approximately ten years and there is no clear tendency. The observations tend to jitter around 3000 tons with a slight negative tendency, but four data points are not enough to call this a tendency.</p>
+</div>
+<div id="of-the-four-types-of-sources-indicated-by-the-type-point-nonpoint-onroad-nonroad-variable-which-of-these-four-sources-have-seen-decreases-in-emissions-from-19992008-for-baltimore-city" class="section level2">
+<h2>Of the four types of sources indicated by the type (point, nonpoint, onroad, nonroad) variable, which of these four sources have seen decreases in emissions from 1999–2008 for Baltimore City?</h2>
+<p><strong>Which have seen increases in emissions from 1999–2008? Use the ggplot2 plotting system to make a plot to answer this question.</strong></p>
+<p>I could have used strsplit, but I have found regex first, so I have decided to leave it here for the sake of variety.</p>
+<pre class="r"><code>total_emission_by_city_year_type &lt;- tapply(X = nei$Emissions,
+                                          INDEX = interaction(nei$fips,
+                                                              nei$year,
+                                                              nei$type),
+                                          FUN = sum)
+row_ids_of_baltimore &lt;- grep(&quot;^24510&quot;,
+                             names(total_emission_by_city_year_type))
+total_emission_baltimore_per_year_type &lt;- total_emission_by_city_year_type[row_ids_of_baltimore]
+df &lt;- as.data.frame(total_emission_baltimore_per_year_type)
+names(df)[1] &lt;- &quot;emission&quot;
+df$year &lt;- substr(str_match(names(total_emission_baltimore_per_year_type),
+                            &quot;\\.([0-9]){4}\\.&quot;), 
+                  2,
+                  5)[ , 1]
+names_list_of_rows &lt;-strsplit(names(total_emission_baltimore_per_year_type),
+                              &quot;\\.&quot;)
+col_data &lt;- t(as.data.frame(names_list_of_rows))
+df$type &lt;- col_data[ , 3]
+names(total_emission_baltimore_per_year_type) &lt;- substr(names(total_emission_baltimore_per_year_type),
+                                                   7,
+                                                   10)
+g &lt;- ggplot(df, aes(year, emission))
+p &lt;- (g
+      + geom_point(aes(color = type))
+      + ggtitle(&quot;PM2.5 emission in Baltimore\nbetween 1999 and 2008&quot;)
+      + labs(x = &quot;Year&quot;, y = &quot;Emission in tons&quot;))
+print(p)</code></pre>
+<p><img src="figure/unnamed-chunk-10.png" alt="plot of chunk unnamed-chunk-10" /></p>
+<pre class="r"><code># remove(total_emission_by_city_year_type,
+#        row_ids_of_baltimore,
+#        total_emission_baltimore_per_year_type,
+#        df,
+#        names_list_of_rows,
+#        col_data)</code></pre>
+<p>It can be declared that the non-road, the on-road and the nonpoint sources have seen a decrease in emissions. The point sources have however shown a spike in 2005 which needs further investigation.</p>
+</div>
+<div id="across-the-united-states-how-have-emissions-from-coal-combustion-related-sources-changed-from-19992008" class="section level2">
+<h2>Across the United States, how have emissions from coal combustion-related sources changed from 1999–2008?</h2>
+<p>I have decided to use the first and the fourth scc levels to identify combustion and coal related sources respectively. Then I have used the union of these two identifiers to find the observations that are related to coal combustion.</p>
+<pre class="r"><code>combustion_ids &lt;- grepl(&quot;*[C|c]ombustion*&quot;,
+                        scc$SCC.Level.One)
+coal_ids &lt;- grepl(&quot;*[C|c]oal*&quot;,
+                  scc$SCC.Level.Four)
+coal_combustion_ids &lt;- combustion_ids &amp; coal_ids
+combustion_sccs &lt;- scc$SCC[coal_combustion_ids]
+coal_combustion_df &lt;- nei[nei$SCC %in% as.character(combustion_sccs), ]
+coal_combustion_per_year &lt;- tapply(X = coal_combustion_df$Emissions,
+                                   INDEX = coal_combustion_df$year,
+                                   FUN = sum)
+g &lt;- ggplot(as.data.frame(coal_combustion_per_year),
+            aes(names(coal_combustion_per_year),
+                coal_combustion_per_year))
+p &lt;- (g
+      + geom_point()
+      + coord_cartesian(ylim = c(0, 600000))
+      + scale_y_continuous(labels = comma)
+      + ggtitle(&quot;PM2.5 emission from\ncoal combustion-related sources\nbetween 1999 and 2008&quot;)
+      + labs(x = &quot;Year&quot;, y = &quot;Emission in tons&quot;))
+print(p)</code></pre>
+<p><img src="figure/unnamed-chunk-11.png" alt="plot of chunk unnamed-chunk-11" /></p>
+<pre class="r"><code>remove(combustion_ids,
+       coal_ids,
+       coal_combustion_ids,
+       combustion_sccs,
+       coal_combustion_df,
+       coal_combustion_per_year,
+       p,
+       g)</code></pre>
+<p>There is a decrease in the PM2.5 emission in the U.S. in the observation period regarding coal-combustion related sources. The emission has decreased by 1/3 from 1999 to 2008.</p>
+</div>
+<div id="how-have-emissions-from-motor-vehicle-sources-changed-from-19992008-in-baltimore-city" class="section level2">
+<h2>How have emissions from motor vehicle sources changed from 1999–2008 in Baltimore City?</h2>
+<p>I have used a similar approach as before, but now I have checked the EI.Sector variable to identify vehicles.</p>
+<pre class="r"><code>motor_vehicle_ids &lt;- grepl(&quot;*[V|v]ehicle*&quot;,
+                           scc$EI.Sector)
+motor_vehicle_sccs &lt;- scc$SCC[motor_vehicle_ids]
+motor_vehicle_df &lt;- nei[(nei$SCC %in% as.character(motor_vehicle_sccs)
+                         &amp; nei$fips == &quot;24510&quot;), ]
+emission_per_year &lt;- tapply(X = motor_vehicle_df$Emissions,
+                            INDEX = motor_vehicle_df$year,
+                            FUN = sum)
+g &lt;- ggplot(as.data.frame(emission_per_year),
+            aes(names(emission_per_year),
+                emission_per_year))
+p &lt;- (g
+      + geom_point()
+      + coord_cartesian(ylim = c(0, 400))
+      + ggtitle(&quot;PM2.5 emission from\nvehicles in Baltimore City\nbetween 1999 and 2008&quot;)
+      + labs(x = &quot;Year&quot;, y = &quot;Emission in tons&quot;))
+print(p)</code></pre>
+<p><img src="figure/unnamed-chunk-12.png" alt="plot of chunk unnamed-chunk-12" /></p>
+<pre class="r"><code>remove(motor_vehicle_ids,
+       motor_vehicle_sccs,
+       motor_vehicle_df,
+       emission_per_year,
+       g,
+       p)</code></pre>
+<p>The PM2.5 has decreased to 1/4 of the 1999 value to 2008 in Baltimore from vehicles.</p>
+</div>
+<div id="compare-emissions-from-motor-vehicle-sources-in-baltimore-city-with-emissions-from-motor-vehicle-sources-in-los-angeles-county-california-fips-06037.-which-city-has-seen-greater-changes-over-time-in-motor-vehicle-emissions" class="section level2">
+<h2>Compare emissions from motor vehicle sources in Baltimore City with emissions from motor vehicle sources in Los Angeles County, California (fips == “06037”). Which city has seen greater changes over time in motor vehicle emissions?</h2>
+<pre class="r"><code>motor_vehicle_ids &lt;- grepl(&quot;*[V|v]ehicle*&quot;,
+                           scc$EI.Sector)
+motor_vehicle_sccs &lt;- scc$SCC[motor_vehicle_ids]
+motor_vehicle_df &lt;- nei[(nei$SCC %in% as.character(motor_vehicle_sccs)
+                         &amp; (nei$fips == &quot;24510&quot; | nei$fips == &quot;06037&quot;)), ]
+emission_per_year &lt;- tapply(X = motor_vehicle_df$Emissions,
+                            INDEX = interaction(motor_vehicle_df$fips,
+                                                motor_vehicle_df$year),
+                            FUN = sum)
+df &lt;- as.data.frame(emission_per_year)
+names(df) &lt;- &quot;emission&quot;
+df$fips &lt;- t(as.data.frame(strsplit(x = rownames(df), split = &quot;\\.&quot;)))[, 1]
+df$city[df$fips == &quot;24510&quot;] &lt;- &quot;Baltimore City&quot;
+df$city[df$fips == &quot;06037&quot;] &lt;- &quot;Los Angeles&quot;
+df$year &lt;- t(as.data.frame(strsplit(x = rownames(df), split = &quot;\\.&quot;)))[, 2]
+g &lt;- ggplot(df,
+            aes(year,
+                emission))
+p &lt;- (g
+      + geom_point(aes(color = city))
+      + ggtitle(&quot;PM2.5 emission from vehicles\nbetween 1999 and 2008&quot;)
+      + labs(x = &quot;Year&quot;, y = &quot;Emission in tons&quot;))
+print(p)</code></pre>
+<p><img src="figure/unnamed-chunk-13.png" alt="plot of chunk unnamed-chunk-13" /></p>
+<p>Comparing Baltimore City and Los Angeles it can be told that while Baltimore City could reduce its PM2.5 emission from vehicles, Los Angeles could only return to the point where it had been in 1999. Baltimore City managed to decrease the vehicle emissions in all the observation periods. In contrast to that Los Angeles ‘allowed’ emission levels to rise but managed to push it back in 2008.</p>
+<pre class="r"><code>los_angeles_sd &lt;- sd(x = df$emission[df$city == &quot;Los Angeles&quot;])
+los_angeles_rel_sd &lt;- (los_angeles_sd
+                       / df$emission[(df$city == &quot;Los Angeles&quot;
+                                      &amp; df$year == 1999)])
+baltimore_sd &lt;- sd(x = df$emission[df$city == &quot;Baltimore City&quot;])
+baltimore_rel_sd &lt;- (baltimore_sd
+                     / df$emission[(df$city == &quot;Baltimore City&quot;
+                                    &amp; df$year == 1999)])</code></pre>
+<p>The question also asked about changes. If we make the standard deviation of emission relative to its initial level then it is <code>0.0728</code> for Los Angeles and <code>0.3358</code> for Baltimore City. Thus Baltimore City has witnessed a greater change even in a relative sense.</p>
+<pre class="r"><code>remove(motor_vehicle_ids,
+       motor_vehicle_sccs,
+       motor_vehicle_df,
+       emission_per_year,
+       df,
+       g,
+       p,
+       los_angeles_sd,
+       baltimore_sd)</code></pre>
+<pre class="r"><code>remove(nei,
+       scc)</code></pre>
+</div>
+</div>
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+$(document).ready(function () {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+});
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
