@@ -85,7 +85,7 @@ print(table,
 ```
 
 <!-- html table generated in R 3.1.3 by xtable 1.7-4 package -->
-<!-- Sun May 24 11:58:05 2015 -->
+<!-- Sun May 24 14:13:33 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> fips </th> <th> SCC </th> <th> Pollutant </th> <th> Emissions </th> <th> type </th> <th> year </th>  </tr>
   <tr> <td align="right"> 4 </td> <td> 09001 </td> <td> 10100401 </td> <td> PM25-PRI </td> <td align="right"> 15.71 </td> <td> POINT </td> <td align="right"> 1999 </td> </tr>
@@ -254,12 +254,12 @@ print(p)
 ![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-10.png) 
 
 ```r
-# remove(total_emission_by_city_year_type,
-#        row_ids_of_baltimore,
-#        total_emission_baltimore_per_year_type,
-#        df,
-#        names_list_of_rows,
-#        col_data)
+remove(total_emission_by_city_year_type,
+       row_ids_of_baltimore,
+       total_emission_baltimore_per_year_type,
+       df,
+       names_list_of_rows,
+       col_data)
 ```
 
 It can be declared that the non-road, the on-road and the nonpoint sources have seen a decrease in emissions. The point sources have however shown a spike in 2005 which needs further investigation.

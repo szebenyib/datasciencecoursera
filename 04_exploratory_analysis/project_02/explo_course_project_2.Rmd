@@ -190,12 +190,12 @@ p <- (g
       + ggtitle("PM2.5 emission in Baltimore\nbetween 1999 and 2008")
       + labs(x = "Year", y = "Emission in tons"))
 print(p)
-# remove(total_emission_by_city_year_type,
-#        row_ids_of_baltimore,
-#        total_emission_baltimore_per_year_type,
-#        df,
-#        names_list_of_rows,
-#        col_data)
+remove(total_emission_by_city_year_type,
+       row_ids_of_baltimore,
+       total_emission_baltimore_per_year_type,
+       df,
+       names_list_of_rows,
+       col_data)
 ```
 
 It can be declared that the non-road, the on-road and the nonpoint sources have seen a decrease in emissions. The point sources have however shown a spike in 2005 which needs further investigation.
