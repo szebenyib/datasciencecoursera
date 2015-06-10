@@ -1,0 +1,158 @@
+---
+title: "Exploratory data analysis - Course Project 2"
+author: "Balint SZEBENYI"
+date: '2015-05-22'
+output: 
+  html_document:
+    keep_md: true
+    self_contained: false
+---
+
+#A glimpse into the effects of severe weather events in the United States
+
+The purpose of this paper is to investigate the effects of different types of weather events in the United States from a perspective of population health and economic consequences.
+The analysis is based on data from the National Weather Service that encompasses the period between 1950 and 2011.
+It is shown/found that....
+
+##Data Processing
+
+```{r}
+#R Setup
+##Libraries
+library(knitr) #markdown
+library(stringr) #string_match
+library(ggplot2) #ggplot2
+library(scales) #ggplot2 scientific notation disabling
+library(dplyr) #data manipulation
+library(xtable) #table output
+```
+
+```{r}
+##Setup working directory and figures location
+working_dir <- "/home/szebenyib/repr/course_project_02/"
+opts_chunk$set(fig.path="figure/")
+```
+
+```{r}
+##Localization of units
+Sys.setlocale("LC_TIME", "C")
+```
+
+
+#
+```{r cache = TRUE}
+filename <- "StormData.csv.bz2"
+full_path <- paste(working_dir,
+                   filename,
+                   sep = "")
+if (!file.exists(full_path)) {
+  download.file(url = "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2",
+                destfile = full_path, 
+                method = "curl")
+}
+df <- read.csv(file = bzfile(paste(working_dir,
+                                  "StormData.csv.bz2",
+                                  sep="")),
+              stringsAsFactors = FALSE)
+df <- tbl_df(df)
+```
+
+##One-dimensional variable analysis
+
+Since there was no codebook to the dataset I had to rely on my instincts besides the supplied "StormDataPrep.doc". The document has helped a lot but it left room for guessing, which is a condition most unfortunate when it comes to analysis.
+
+The first variable to analyze is the event type. The EVTYPE
+```{r}
+#df$EVTYPE
+```
+
+The F variable contains **typhoon categories**. Page 53 of the 10-16005 document gives an explanation of the typhoon categories and related wind speeds.
+```{r}
+hist(df$F)
+```
+
+The MAG variable containts information about **earthquakes**. If measured on the Richter scale then the maximum should be around 10. This suggests that anything that is higher than 1000 (storing 10 as 1000) should be exempt from the analysis as a potentital sign of erroneous data. See: [http://www.geo.mtu.edu/UPSeis/magnitude.html]
+```{r}
+boxplot(df$MAG)
+df <- df[df$MAG < 1000, ]
+```
+
+Observing the **fatalities** the event with maximum fatalities happened on 7/12/1995, and it was caused by an intense heat wave in Illinois. It has caused fatalities that have resulted in as much as ```r max(df$FATALITIES)``` victims.
+```{r}
+boxplot(df$FATALITIES)
+```
+
+Looking at the summary of **injuries** a heavily skewed distribution is visible, meaning that there were only few weather events causing injuries in vast numbers. Since the median is smaller then the mean, the distibution is heavily skewed to the left with a long right tail.
+```{r}
+summary(df$INJURIES)
+```
+The tornado was the typical event in case more than 1000 people were injured.
+```{r}
+table(df$EVTYPE[df$INJURIES > 1000])
+```
+
+Property damage is stored in two variables so the actual and 'machinereadable' value has to be constructed. Since the values do not correspond to the SI prefixes, only the instinction is left to guide the analysis.
+First, the prefixes have to be converted to factors, then a brief summary is presented about them.
+```{r}
+df$PROPDMGEXP <- factor(df$PROPDMGEXP)
+table(df$PROPDMGEXP)
+```
+It can be seen that there are many empty values for cases where property damage is absent. The more relevant values are H, K, M and B for hundred, kilo, million and billion. I have decided to consider the numbers refer to the exponents of then which I have assumed. I have considered the minus sign to symbolize the fact that the number does not need exponents as it the scale information is contained in the variable itself. If the scale variable is not present then the record is discarded as an invalid observation. The same function will be used for other variables as well. *An ugly approach is used to mark cases with NA values, due to conversion issues. The 99899 values are later replaced with NA values.*
+```{r}
+get_value_from_scaling <- function(value, scale) {
+  ifelse(scale == "0" | scale == "-", value, value)
+  ifelse(scale == "1", value * 1e1, value)
+  ifelse(scale == "2" | scale == "H" | scale == "h", value * 1e2, value)
+  ifelse(scale == "3" | scale == "K" | scale == "k", value * 1e3, value)
+  ifelse(scale == "4", value * 1e4, value)
+  ifelse(scale == "5", value * 1e5, value)
+  ifelse(scale == "6" | scale == "M" | scale == "m", value * 1e6, value)
+  ifelse(scale == "7", value * 1e7, value)
+  ifelse(scale == "8", value * 1e8, value)
+  ifelse(scale == "9" | scale == "B" | scale == "b", value * 1e9, value)
+}
+```
+
+```{r}
+df$property_damage <- get_value_from_scaling(value = df$PROPDMG,
+                                             scale = df$PROPDMGEXP)
+```
+
+The property damage reveals a distribution that is skewed to the left.
+```{r}
+summary(df$property_damage)
+```
+
+The same correction is applied on crop damage as it needs to be taken into consideration as economic damage.
+```{r}
+df$CROPDMGEXP <- factor(df$CROPDMGEXP)
+df$crop_damage <- get_value_from_scaling(value = df$CROPDMG,
+                                         scale = df$CROPDMGEXP)
+```
+
+Again, a right tail is to be observed.
+```{r}
+summary(df$crop_damage)
+```
+
+
+
+A brief overview of the data frames:
+Looking at the variables it is visible that
+```{r results = "asis"}
+table <- xtable(head(df))
+print(table,
+      type = "html")
+```
+```{r}
+str(df)
+```
+
+
+
+
+
+```{r fig.height = 4.5}
+
+remove(table)
+```
