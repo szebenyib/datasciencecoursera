@@ -61,10 +61,21 @@ df <- tbl_df(df)
 
 Since there was no codebook to the dataset I had to rely on my instincts besides the supplied "StormDataPrep.doc". The document has helped a lot but it left room for guessing, which is a condition most unfortunate when it comes to analysis.
 
-The first variable to analyze is the event type. The EVTYPE
+The first variable to analyze is the event type.
 ```{r}
-#df$EVTYPE
+event_types <- table(df$EVTYPE)
+head(event_types[order(-event_types)])
+tail(event_types[order(-event_types)])
 ```
+As it can be seen the event type variable is unfortunately not coherent. There are a lot of events which are named poorly. Take for example the wind storm, wnd, winter storm/high winds observations. They could be categorized in a main group 'storm'. In a real world scenario it would be wise to group the event types into a sane number of event types so that an analysis can answer event type related questions.
+Since it would take an enormous time to tidy up all these observations manually I have decided to ignore this problem and concentrate on such events that are present in large numbers.
+```{r}
+#Observations with less than ten counts
+sum(event_types[event_types < 10])
+#As a proportion
+sum(event_types[event_types < 10]) / sum(event_types)
+```
+Based on the above numbers I have decided that this distortion is acceptable in the current situation, noting that averages and conclusions of this analysis might be biased by this.
 
 The F variable contains **typhoon categories**. Page 53 of the 10-16005 document gives an explanation of the typhoon categories and related wind speeds.
 ```{r}
@@ -134,6 +145,8 @@ Again, a right tail is to be observed.
 ```{r}
 summary(df$crop_damage)
 ```
+
+##Two dimensional variable analysis
 
 
 
