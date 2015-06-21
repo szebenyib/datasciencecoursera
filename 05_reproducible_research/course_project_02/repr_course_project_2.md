@@ -1,12 +1,6 @@
----
-title: "Exploratory data analysis - Course Project 2"
-author: "Balint SZEBENYI"
-date: '2015-05-22'
-output: 
-  html_document:
-    keep_md: true
-    self_contained: false
----
+# Exploratory data analysis - Course Project 2
+Balint SZEBENYI  
+2015-05-22  
 
 #A glimpse into the effects of severe weather events in the United States
 
@@ -19,30 +13,54 @@ It is found that the economic and health related externalities of weather events
 ###R Setup
 
 ####Libraries
-```{r}
+
+```r
 library(knitr) #markdown
 library(stringr) #string_match
 library(ggplot2) #ggplot2
 library(scales) #ggplot2 scientific notation disabling
 library(dplyr) #data manipulation
+```
+
+```
+## 
+## Attaching package: 'dplyr'
+## 
+## The following object is masked from 'package:stats':
+## 
+##     filter
+## 
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+```
+
+```r
 library(xtable) #table output
 ```
 
 ####Setup working directory and figures location
-```{r}
+
+```r
 working_dir <- "/home/szebenyib/repr/course_project_02/"
 opts_chunk$set(fig.path="figure/")
 ```
 
 ####Localization of units
-```{r}
+
+```r
 Sys.setlocale("LC_TIME", "C")
+```
+
+```
+## [1] "C"
 ```
 
 
 ###Data retrieval and loading
 The data was obtained from the web adress specified in the exercise. It is downloaded from there, so it is not the newest available data.
-```{r cache = TRUE}
+
+```r
 filename <- "StormData.csv.bz2"
 full_path <- paste(working_dir,
                    filename,
@@ -64,24 +82,57 @@ df <- tbl_df(df)
 Since there was no codebook to the dataset I had to rely on my instincts besides the supplied "StormDataPrep.doc". The document has helped a lot but it left room for guessing, which is a condition most unfortunate when it comes to analysing data.
 
 The first variable to analyze is the **event type**.
-```{r}
+
+```r
 event_types <- table(df$EVTYPE)
 head(event_types[order(-event_types)])
+```
+
+```
+## 
+##              HAIL         TSTM WIND THUNDERSTORM WIND           TORNADO 
+##            288661            219940             82563             60652 
+##       FLASH FLOOD             FLOOD 
+##             54277             25326
+```
+
+```r
 tail(event_types[order(-event_types)])
+```
+
+```
+## 
+##              WIND STORM  WINTER STORM/HIGH WIND WINTER STORM HIGH WINDS 
+##                       1                       1                       1 
+## WINTER STORM/HIGH WINDS              Wintry Mix                     WND 
+##                       1                       1                       1
 ```
 As it can be seen the event type variable is unfortunately not coherent. There are a lot of events which are named poorly. Take for example the wind storm, wnd, winter storm/high winds observations. They could be categorized in a main group 'storm'. In a real world scenario it would be wise to group the event types into a sane number of event types so that an analysis can answer event type related questions.
 Since it would take an enormous time to tidy up all these observations manually I have decided to simplify this problem and concentrate on such events that are present in large numbers.
-```{r}
+
+```r
 data <- data.frame(event_types)
 names(data) <- c("event_type", "count")
 #Observations with more than a hundred counts:
 sum(data$count > 100)
+```
+
+```
+## [1] 69
+```
+
+```r
 #This covers from all the cases:
 sum(data$count[data$count > 100]) / sum(data$count)
 ```
+
+```
+## [1] 0.9948
+```
 Based on the above numbers I have decided that this distortion is acceptable in the current situation, noting that averages and conclusions of this analysis might be biased by this.
 I have decided to examine the eventy types in the cases where there were more than a hundred occurences. I have renamed the similare event types to group them together so as to form logical groups.
-```{r}
+
+```r
 #data[data$count>100, ]
 df$EVTYPE[df$EVTYPE == "COASTAL FLOODING"] <- "FLOOD"
 df$EVTYPE[df$EVTYPE == "COLD/WIND CHILL"] <- "EXTREME COLD"
@@ -124,30 +175,54 @@ df$EVTYPE[df$EVTYPE == "TYPHOON"] <- "HURRICANE/TYPHOON"
 The F variable contains **typhoon categories**. Page 53 of the 10-16005 document gives an explanation of the typhoon categories and related wind speeds.
 
 The MAG variable containts information about **earthquakes**. If measured on the Richter scale then the maximum should be around 10. This suggests that anything that is higher than 1000 (storing 10 as 1000) should be exempt from the analysis as a potentital sign of erroneous data. See: [http://www.geo.mtu.edu/UPSeis/magnitude.html]
-```{r}
+
+```r
 #boxplot(df$MAG)
 df <- df[df$MAG < 1000, ]
 ```
 
-Observing the **fatalities** the event with maximum fatalities happened on 7/12/1995, and it was caused by an intense heat wave in Illinois. It has caused fatalities that have resulted in as much as ```r max(df$FATALITIES)``` victims.
+Observing the **fatalities** the event with maximum fatalities happened on 7/12/1995, and it was caused by an intense heat wave in Illinois. It has caused fatalities that have resulted in as much as ``583`` victims.
 
 Looking at the summary of **injuries** a heavily skewed distribution is visible, meaning that there were only few weather events causing injuries in vast numbers. Since the median is smaller then the mean, the distibution is heavily skewed to the left with a long right tail.
-```{r}
+
+```r
 summary(df$INJURIES)
 ```
+
+```
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##     0.0     0.0     0.0     0.2     0.0  1700.0
+```
 The tornado was the typical event in case more than 1000 people were injured.
-```{r}
+
+```r
 table(df$EVTYPE[df$INJURIES > 1000])
+```
+
+```
+## 
+## ICE STORM   TORNADO 
+##         1         4
 ```
 
 **Property damage** is stored in two variables so the actual and 'machinereadable' value has to be constructed. Since the values do not correspond to the SI prefixes, only the instinction is left to guide the analysis.
 First, the prefixes have to be converted to factors, then a brief summary is presented about them.
-```{r}
+
+```r
 df$PROPDMGEXP <- factor(df$PROPDMGEXP)
 table(df$PROPDMGEXP)
 ```
+
+```
+## 
+##             -      ?      +      0      1      2      3      4      5 
+## 465926      1      8      5    216     25     13      4      4     28 
+##      6      7      8      B      h      H      K      m      M 
+##      4      5      1     40      1      6 424665      7  11328
+```
 It can be seen that there are many empty values for cases where property damage is absent. The more relevant values are H, K, M and B for hundred, kilo, million and billion. I have decided to consider the numbers refer to the exponents of then which I have assumed. I have considered the minus sign to symbolize the fact that the number does not need exponents as it the scale information is contained in the variable itself. If the scale variable is not present then the record is discarded as an invalid observation. The same function will be used for other variables as well.
-```{r}
+
+```r
 get_value_from_scaling <- function(value, scale) {
   ifelse(scale == "0" | scale == "-", value, value)
   ifelse(scale == "1", value * 1e1, value)
@@ -162,26 +237,40 @@ get_value_from_scaling <- function(value, scale) {
 }
 ```
 
-```{r}
+
+```r
 df$property_damage <- get_value_from_scaling(value = df$PROPDMG,
                                              scale = df$PROPDMGEXP)
 ```
 
 The **property damage** reveals a distribution that is skewed to the left.
-```{r}
+
+```r
 summary(df$property_damage)
 ```
 
+```
+##     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+## 0.00e+00 0.00e+00 0.00e+00 3.06e+05 0.00e+00 1.15e+11
+```
+
 The same correction is applied on **crop damage** as it needs to be taken into consideration as economic damage.
-```{r}
+
+```r
 df$CROPDMGEXP <- factor(df$CROPDMGEXP)
 df$crop_damage <- get_value_from_scaling(value = df$CROPDMG,
                                          scale = df$CROPDMGEXP)
 ```
 
 Again, a right tail is to be observed.
-```{r}
+
+```r
 summary(df$crop_damage)
+```
+
+```
+##     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+## 0.00e+00 0.00e+00 0.00e+00 1.51e+04 0.00e+00 5.00e+09
 ```
 
 ##Results
@@ -189,12 +278,14 @@ summary(df$crop_damage)
 ###Economic impact
 
 I have considered both the property and the crop damage to be an answer together for the economic impact of weather events.
-```{r}
+
+```r
 df$economic_damage <- df$property_damage + df$crop_damage
 ```
 
 The top 5 events from a perspective of economic damage are visible below.
-```{r fig.height = 4.5}
+
+```r
 #Calculating
 df$economic_damage <- df$property_damage + df$crop_damage
 economic_damage_per_evtype <- tapply(X = df$economic_damage,
@@ -217,12 +308,15 @@ a + geom_bar(stat = "identity") +
   theme(axis.text.x = element_text(size = 8))
 ```
 
+![plot of chunk unnamed-chunk-18](figure/unnamed-chunk-18.png) 
+
 It can be extracted from the graph that flood is responsible for most of the damage to the economy regarding weather events. About half as harmful are hurricanes and typhons. Although flood has deemed to cause the most damage, the four other events all have a high windspeed in common and together they overtake flood in the ranking.
 
 ###Effect on publich health
 
 The top 5 events that were most harmful to population health are visible below
-```{r fig.height = 4.5}
+
+```r
 #Calculating
 injuries_per_evtype <- tapply(X = df$INJURIES,
                               INDEX = df$EVTYPE,
@@ -244,9 +338,12 @@ a + geom_bar(stat = "identity") +
   theme(axis.text.x = element_text(size = 7.5))
 ```
 
+![plot of chunk unnamed-chunk-19](figure/unnamed-chunk-19.png) 
+
 Tornados cause the most injuries, no doubt. They cause more injuries than the other four events together. It is interesting to observe that lightning alone has caused many injuries for it is a phenomenon that can see it's effects avoided by using the invention of Benjamin Franklin.
 
-```{r fig.height = 4.5}
+
+```r
 #Calculating
 fatalities_per_evtype <- tapply(X = df$FATALITIES,
                               INDEX = df$EVTYPE,
@@ -267,6 +364,8 @@ a + geom_bar(stat = "identity") +
   guides(fill = FALSE) +
   theme(axis.text.x = element_text(size = 7.5))
 ```
+
+![plot of chunk unnamed-chunk-20](figure/unnamed-chunk-20.png) 
 
 Fatalities show the observer a different ranking. While tornados are still on the lead, excessive heat appears on the second place. The effects of heat seem diminishing besides tornados but when heat exercises its power it tends to take human lives and cause a lot of injuries.
 

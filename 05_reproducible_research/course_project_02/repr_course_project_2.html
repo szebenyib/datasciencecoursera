@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="author" content="Balint SZEBENYI" />
+
+<meta name="date" content="2015-05-22" />
+
+<title>Exploratory data analysis - Course Project 2</title>
+
+<script src="repr_course_project_2_files/jquery-1.11.0/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link href="repr_course_project_2_files/bootstrap-2.3.2/css/bootstrap.min.css" rel="stylesheet" />
+<link href="repr_course_project_2_files/bootstrap-2.3.2/css/bootstrap-responsive.min.css" rel="stylesheet" />
+<script src="repr_course_project_2_files/bootstrap-2.3.2/js/bootstrap.min.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<link rel="stylesheet"
+      href="repr_course_project_2_files/highlight/default.css"
+      type="text/css" />
+<script src="repr_course_project_2_files/highlight/highlight.js"></script>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs && document.readyState && document.readyState === "complete") {
+   window.setTimeout(function() {
+      hljs.initHighlighting();
+   }, 0);
+}
+</script>
+
+
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+</style>
+<div class="container-fluid main-container">
+
+
+<div id="header">
+<h1 class="title">Exploratory data analysis - Course Project 2</h1>
+<h4 class="author"><em>Balint SZEBENYI</em></h4>
+<h4 class="date"><em>2015-05-22</em></h4>
+</div>
+
+
+<div id="a-glimpse-into-the-effects-of-severe-weather-events-in-the-united-states" class="section level1">
+<h1>A glimpse into the effects of severe weather events in the United States</h1>
+<p>The purpose of this paper is to investigate the effects of different types of weather events in the United States from a perspective of population health and economic consequences. The analysis is based on data from the National Weather Service that encompasses the period between 1950 and 2011. It is found that the economic and health related externalities of weather events can be assigned to different weather events. While flood causes the most damage to property it is the tornadoes that cause worries when it comes to threatening human life.</p>
+<div id="data-processing" class="section level2">
+<h2>Data Processing</h2>
+<div id="r-setup" class="section level3">
+<h3>R Setup</h3>
+<div id="libraries" class="section level4">
+<h4>Libraries</h4>
+<pre class="r"><code>library(knitr) #markdown
+library(stringr) #string_match
+library(ggplot2) #ggplot2
+library(scales) #ggplot2 scientific notation disabling
+library(dplyr) #data manipulation</code></pre>
+<pre><code>## 
+## Attaching package: &#39;dplyr&#39;
+## 
+## The following object is masked from &#39;package:stats&#39;:
+## 
+##     filter
+## 
+## The following objects are masked from &#39;package:base&#39;:
+## 
+##     intersect, setdiff, setequal, union</code></pre>
+<pre class="r"><code>library(xtable) #table output</code></pre>
+</div>
+<div id="setup-working-directory-and-figures-location" class="section level4">
+<h4>Setup working directory and figures location</h4>
+<pre class="r"><code>working_dir &lt;- &quot;/home/szebenyib/repr/course_project_02/&quot;
+opts_chunk$set(fig.path=&quot;figure/&quot;)</code></pre>
+</div>
+<div id="localization-of-units" class="section level4">
+<h4>Localization of units</h4>
+<pre class="r"><code>Sys.setlocale(&quot;LC_TIME&quot;, &quot;C&quot;)</code></pre>
+<pre><code>## [1] &quot;C&quot;</code></pre>
+</div>
+</div>
+<div id="data-retrieval-and-loading" class="section level3">
+<h3>Data retrieval and loading</h3>
+<p>The data was obtained from the web adress specified in the exercise. It is downloaded from there, so it is not the newest available data.</p>
+<pre class="r"><code>filename &lt;- &quot;StormData.csv.bz2&quot;
+full_path &lt;- paste(working_dir,
+                   filename,
+                   sep = &quot;&quot;)
+if (!file.exists(full_path)) {
+  download.file(url = &quot;https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2&quot;,
+                destfile = full_path, 
+                method = &quot;curl&quot;)
+}
+df &lt;- read.csv(file = bzfile(paste(working_dir,
+                                  &quot;StormData.csv.bz2&quot;,
+                                  sep=&quot;&quot;)),
+              stringsAsFactors = FALSE)
+df &lt;- tbl_df(df)</code></pre>
+</div>
+<div id="one-dimensional-variable-analysis-and-data-clean-up" class="section level3">
+<h3>One-dimensional variable analysis and data clean-up</h3>
+<p>Since there was no codebook to the dataset I had to rely on my instincts besides the supplied “StormDataPrep.doc”. The document has helped a lot but it left room for guessing, which is a condition most unfortunate when it comes to analysing data.</p>
+<p>The first variable to analyze is the <strong>event type</strong>.</p>
+<pre class="r"><code>event_types &lt;- table(df$EVTYPE)
+head(event_types[order(-event_types)])</code></pre>
+<pre><code>## 
+##              HAIL         TSTM WIND THUNDERSTORM WIND           TORNADO 
+##            288661            219940             82563             60652 
+##       FLASH FLOOD             FLOOD 
+##             54277             25326</code></pre>
+<pre class="r"><code>tail(event_types[order(-event_types)])</code></pre>
+<pre><code>## 
+##              WIND STORM  WINTER STORM/HIGH WIND WINTER STORM HIGH WINDS 
+##                       1                       1                       1 
+## WINTER STORM/HIGH WINDS              Wintry Mix                     WND 
+##                       1                       1                       1</code></pre>
+<p>As it can be seen the event type variable is unfortunately not coherent. There are a lot of events which are named poorly. Take for example the wind storm, wnd, winter storm/high winds observations. They could be categorized in a main group ‘storm’. In a real world scenario it would be wise to group the event types into a sane number of event types so that an analysis can answer event type related questions. Since it would take an enormous time to tidy up all these observations manually I have decided to simplify this problem and concentrate on such events that are present in large numbers.</p>
+<pre class="r"><code>data &lt;- data.frame(event_types)
+names(data) &lt;- c(&quot;event_type&quot;, &quot;count&quot;)
+#Observations with more than a hundred counts:
+sum(data$count &gt; 100)</code></pre>
+<pre><code>## [1] 69</code></pre>
+<pre class="r"><code>#This covers from all the cases:
+sum(data$count[data$count &gt; 100]) / sum(data$count)</code></pre>
+<pre><code>## [1] 0.9948</code></pre>
+<p>Based on the above numbers I have decided that this distortion is acceptable in the current situation, noting that averages and conclusions of this analysis might be biased by this. I have decided to examine the eventy types in the cases where there were more than a hundred occurences. I have renamed the similare event types to group them together so as to form logical groups.</p>
+<pre class="r"><code>#data[data$count&gt;100, ]
+df$EVTYPE[df$EVTYPE == &quot;COASTAL FLOODING&quot;] &lt;- &quot;FLOOD&quot;
+df$EVTYPE[df$EVTYPE == &quot;COLD/WIND CHILL&quot;] &lt;- &quot;EXTREME COLD&quot;
+df$EVTYPE[df$EVTYPE == &quot;DENSE FOG&quot;] &lt;- &quot;FOG&quot;
+df$EVTYPE[df$EVTYPE == &quot;EXTREME COLD/WINDCHILL&quot;] &lt;- &quot;EXTREME COLD&quot;
+df$EVTYPE[df$EVTYPE == &quot;EXTREME WINDCHILL&quot;] &lt;- &quot;EXTREME COLD&quot;
+df$EVTYPE[df$EVTYPE == &quot;FLASH FLOODING&quot;] &lt;- &quot;FLOOD&quot;
+df$EVTYPE[df$EVTYPE == &quot;FLOOD/FLASH FLOODING&quot;] &lt;- &quot;FLOOD&quot;
+df$EVTYPE[df$EVTYPE == &quot;FLOOD/FLASH FLOOD&quot;] &lt;- &quot;FLOOD&quot;
+df$EVTYPE[df$EVTYPE == &quot;FLOODING&quot;] &lt;- &quot;FLOOD&quot;
+df$EVTYPE[df$EVTYPE == &quot;FROST/FREEZE&quot;] &lt;- &quot;EXTREME COLD&quot;
+df$EVTYPE[df$EVTYPE == &quot;HEAVY SNOW&quot;] &lt;- &quot;SNOW&quot;
+df$EVTYPE[df$EVTYPE == &quot;HEAT&quot;] &lt;- &quot;EXCESSIVE HEAT&quot;
+df$EVTYPE[df$EVTYPE == &quot;HEAVY SURF/HIGH SURF&quot;] &lt;- &quot;HIGH SURF&quot;
+df$EVTYPE[df$EVTYPE == &quot;HIGH WINDS&quot;] &lt;- &quot;HIGH WIND&quot;
+df$EVTYPE[df$EVTYPE == &quot;HEAVY SNOW&quot;] &lt;- &quot;SNOW&quot;
+df$EVTYPE[df$EVTYPE == &quot;MARINE HIGH WIND&quot;] &lt;- &quot;THUNDERSTORM WIND&quot;
+df$EVTYPE[df$EVTYPE == &quot;MARINE TSTM WIND&quot;] &lt;- &quot;THUNDERSTORM WIND&quot;
+df$EVTYPE[df$EVTYPE == &quot;MODERATE SNOWFALL&quot;] &lt;- &quot;SNOW&quot;
+df$EVTYPE[df$EVTYPE == &quot;RECORD WARMTH&quot;] &lt;- &quot;EXCESSIVE HEAT&quot;
+df$EVTYPE[df$EVTYPE == &quot;RIP CURRENTS&quot;] &lt;- &quot;RIP CURRENT&quot;
+df$EVTYPE[df$EVTYPE == &quot;RIVER FLOOD&quot;] &lt;- &quot;FLOOD&quot;
+df$EVTYPE[df$EVTYPE == &quot;STORM SURGE/TIDE&quot;] &lt;- &quot;STORM SURGE&quot;
+df$EVTYPE[df$EVTYPE == &quot;STRONG WIND&quot;] &lt;- &quot;THUNDERSTORM WIND&quot;
+df$EVTYPE[df$EVTYPE == &quot;STRONG WINDS&quot;] &lt;- &quot;THUNDERSTORM WIND&quot;
+df$EVTYPE[df$EVTYPE == &quot;THUNDERSTORM WINDS&quot;] &lt;- &quot;THUNDERSTORM WIND&quot;
+df$EVTYPE[df$EVTYPE == &quot;TSTM WIND&quot;] &lt;- &quot;THUNDERSTORM WIND&quot;
+df$EVTYPE[df$EVTYPE == &quot;TSTM WIND/HAIL&quot;] &lt;- &quot;THUNDERSTORM WIND&quot;
+df$EVTYPE[df$EVTYPE == &quot;UNSEASONABLY WARM&quot;] &lt;- &quot;EXCESSIVE HEAT&quot;
+df$EVTYPE[df$EVTYPE == &quot;URBAN FLOOD&quot;] &lt;- &quot;FLOOD&quot;
+df$EVTYPE[df$EVTYPE == &quot;URBAN/SML STREAM FLD&quot;] &lt;- &quot;FLOOD&quot;
+df$EVTYPE[df$EVTYPE == &quot;WATERSPOUT&quot;] &lt;- &quot;TORNADO&quot;
+df$EVTYPE[df$EVTYPE == &quot;WILD/FOREST FIRE&quot;] &lt;- &quot;WILDFIRE&quot;
+df$EVTYPE[df$EVTYPE == &quot;WINTER WEATHER/MIX&quot;] &lt;- &quot;WINTER WEATHER&quot;
+df$EVTYPE[df$EVTYPE == &quot;WINTER STORM&quot;] &lt;- &quot;WINTER WEATHER&quot;
+df$EVTYPE[df$EVTYPE == &quot;HURRICANE&quot;] &lt;- &quot;HURRICANE/TYPHOON&quot;
+df$EVTYPE[df$EVTYPE == &quot;TYPHOON&quot;] &lt;- &quot;HURRICANE/TYPHOON&quot;</code></pre>
+<p>The F variable contains <strong>typhoon categories</strong>. Page 53 of the 10-16005 document gives an explanation of the typhoon categories and related wind speeds.</p>
+<p>The MAG variable containts information about <strong>earthquakes</strong>. If measured on the Richter scale then the maximum should be around 10. This suggests that anything that is higher than 1000 (storing 10 as 1000) should be exempt from the analysis as a potentital sign of erroneous data. See: [<a href="http://www.geo.mtu.edu/UPSeis/magnitude.html">http://www.geo.mtu.edu/UPSeis/magnitude.html</a>]</p>
+<pre class="r"><code>#boxplot(df$MAG)
+df &lt;- df[df$MAG &lt; 1000, ]</code></pre>
+<p>Observing the <strong>fatalities</strong> the event with maximum fatalities happened on 7/12/1995, and it was caused by an intense heat wave in Illinois. It has caused fatalities that have resulted in as much as <code>583</code> victims.</p>
+<p>Looking at the summary of <strong>injuries</strong> a heavily skewed distribution is visible, meaning that there were only few weather events causing injuries in vast numbers. Since the median is smaller then the mean, the distibution is heavily skewed to the left with a long right tail.</p>
+<pre class="r"><code>summary(df$INJURIES)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##     0.0     0.0     0.0     0.2     0.0  1700.0</code></pre>
+<p>The tornado was the typical event in case more than 1000 people were injured.</p>
+<pre class="r"><code>table(df$EVTYPE[df$INJURIES &gt; 1000])</code></pre>
+<pre><code>## 
+## ICE STORM   TORNADO 
+##         1         4</code></pre>
+<p><strong>Property damage</strong> is stored in two variables so the actual and ‘machinereadable’ value has to be constructed. Since the values do not correspond to the SI prefixes, only the instinction is left to guide the analysis. First, the prefixes have to be converted to factors, then a brief summary is presented about them.</p>
+<pre class="r"><code>df$PROPDMGEXP &lt;- factor(df$PROPDMGEXP)
+table(df$PROPDMGEXP)</code></pre>
+<pre><code>## 
+##             -      ?      +      0      1      2      3      4      5 
+## 465926      1      8      5    216     25     13      4      4     28 
+##      6      7      8      B      h      H      K      m      M 
+##      4      5      1     40      1      6 424665      7  11328</code></pre>
+<p>It can be seen that there are many empty values for cases where property damage is absent. The more relevant values are H, K, M and B for hundred, kilo, million and billion. I have decided to consider the numbers refer to the exponents of then which I have assumed. I have considered the minus sign to symbolize the fact that the number does not need exponents as it the scale information is contained in the variable itself. If the scale variable is not present then the record is discarded as an invalid observation. The same function will be used for other variables as well.</p>
+<pre class="r"><code>get_value_from_scaling &lt;- function(value, scale) {
+  ifelse(scale == &quot;0&quot; | scale == &quot;-&quot;, value, value)
+  ifelse(scale == &quot;1&quot;, value * 1e1, value)
+  ifelse(scale == &quot;2&quot; | scale == &quot;H&quot; | scale == &quot;h&quot;, value * 1e2, value)
+  ifelse(scale == &quot;3&quot; | scale == &quot;K&quot; | scale == &quot;k&quot;, value * 1e3, value)
+  ifelse(scale == &quot;4&quot;, value * 1e4, value)
+  ifelse(scale == &quot;5&quot;, value * 1e5, value)
+  ifelse(scale == &quot;6&quot; | scale == &quot;M&quot; | scale == &quot;m&quot;, value * 1e6, value)
+  ifelse(scale == &quot;7&quot;, value * 1e7, value)
+  ifelse(scale == &quot;8&quot;, value * 1e8, value)
+  ifelse(scale == &quot;9&quot; | scale == &quot;B&quot; | scale == &quot;b&quot;, value * 1e9, value)
+}</code></pre>
+<pre class="r"><code>df$property_damage &lt;- get_value_from_scaling(value = df$PROPDMG,
+                                             scale = df$PROPDMGEXP)</code></pre>
+<p>The <strong>property damage</strong> reveals a distribution that is skewed to the left.</p>
+<pre class="r"><code>summary(df$property_damage)</code></pre>
+<pre><code>##     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+## 0.00e+00 0.00e+00 0.00e+00 3.06e+05 0.00e+00 1.15e+11</code></pre>
+<p>The same correction is applied on <strong>crop damage</strong> as it needs to be taken into consideration as economic damage.</p>
+<pre class="r"><code>df$CROPDMGEXP &lt;- factor(df$CROPDMGEXP)
+df$crop_damage &lt;- get_value_from_scaling(value = df$CROPDMG,
+                                         scale = df$CROPDMGEXP)</code></pre>
+<p>Again, a right tail is to be observed.</p>
+<pre class="r"><code>summary(df$crop_damage)</code></pre>
+<pre><code>##     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+## 0.00e+00 0.00e+00 0.00e+00 1.51e+04 0.00e+00 5.00e+09</code></pre>
+</div>
+</div>
+<div id="results" class="section level2">
+<h2>Results</h2>
+<div id="economic-impact" class="section level3">
+<h3>Economic impact</h3>
+<p>I have considered both the property and the crop damage to be an answer together for the economic impact of weather events.</p>
+<pre class="r"><code>df$economic_damage &lt;- df$property_damage + df$crop_damage</code></pre>
+<p>The top 5 events from a perspective of economic damage are visible below.</p>
+<pre class="r"><code>#Calculating
+df$economic_damage &lt;- df$property_damage + df$crop_damage
+economic_damage_per_evtype &lt;- tapply(X = df$economic_damage,
+                                     INDEX = df$EVTYPE,
+                                     FUN = sum)
+economic_damage_per_evtype &lt;- sort(economic_damage_per_evtype,
+                                   decreasing = TRUE)
+data &lt;- data.frame(economic_damage_per_evtype[1:5])
+data$evtype &lt;- factor(rownames(data), levels = rownames(data))
+#Printing
+a &lt;- ggplot(data = data,
+            aes(x = evtype,
+                y = economic_damage_per_evtype.1.5. / 1e9,
+                fill = evtype))
+a + geom_bar(stat = &quot;identity&quot;) + 
+  ylab(&quot;Economic damage in billion USD&quot;) + 
+  xlab(&quot;Event type&quot;) + 
+  ggtitle(&quot;Flood has the greatest economic impact\namong weather events in the U.S.&quot;) + 
+  guides(fill = FALSE) + 
+  theme(axis.text.x = element_text(size = 8))</code></pre>
+<p><img src="figure/unnamed-chunk-18.png" alt="plot of chunk unnamed-chunk-18" /></p>
+<p>It can be extracted from the graph that flood is responsible for most of the damage to the economy regarding weather events. About half as harmful are hurricanes and typhons. Although flood has deemed to cause the most damage, the four other events all have a high windspeed in common and together they overtake flood in the ranking.</p>
+</div>
+<div id="effect-on-publich-health" class="section level3">
+<h3>Effect on publich health</h3>
+<p>The top 5 events that were most harmful to population health are visible below</p>
+<pre class="r"><code>#Calculating
+injuries_per_evtype &lt;- tapply(X = df$INJURIES,
+                              INDEX = df$EVTYPE,
+                              FUN = sum)
+injuries_per_evtype &lt;- sort(injuries_per_evtype,
+                            decreasing = TRUE)
+data &lt;- data.frame(injuries_per_evtype[1:5])
+data$evtype &lt;- factor(rownames(data), levels = rownames(data))
+#Printing
+a &lt;- ggplot(data = data,
+            aes(x = evtype,
+                y = injuries_per_evtype.1.5.,
+                fill = evtype))
+a + geom_bar(stat = &quot;identity&quot;) + 
+  ylab(&quot;Injuries&quot;) + 
+  xlab(&quot;Event type&quot;) + 
+  ggtitle(&quot;Tornados are the most devastating weather events\nto cause injuries in the U.S.&quot;) + 
+  guides(fill = FALSE) +
+  theme(axis.text.x = element_text(size = 7.5))</code></pre>
+<p><img src="figure/unnamed-chunk-19.png" alt="plot of chunk unnamed-chunk-19" /></p>
+<p>Tornados cause the most injuries, no doubt. They cause more injuries than the other four events together. It is interesting to observe that lightning alone has caused many injuries for it is a phenomenon that can see it’s effects avoided by using the invention of Benjamin Franklin.</p>
+<pre class="r"><code>#Calculating
+fatalities_per_evtype &lt;- tapply(X = df$FATALITIES,
+                              INDEX = df$EVTYPE,
+                              FUN = sum)
+fatalities_per_evtype &lt;- sort(fatalities_per_evtype,
+                              decreasing = TRUE)
+data &lt;- data.frame(fatalities_per_evtype[1:5])
+data$evtype &lt;- factor(rownames(data), levels = rownames(data))
+#Printing
+a &lt;- ggplot(data = data,
+            aes(x = evtype,
+                y = fatalities_per_evtype.1.5.,
+                fill = evtype))
+a + geom_bar(stat = &quot;identity&quot;) + 
+  ylab(&quot;Fatalities&quot;) + 
+  xlab(&quot;Event type&quot;) + 
+  ggtitle(&quot;Tornados pose the highest threat to human life\nwhen it comes to weather events in the U.S.&quot;) + 
+  guides(fill = FALSE) +
+  theme(axis.text.x = element_text(size = 7.5))</code></pre>
+<p><img src="figure/unnamed-chunk-20.png" alt="plot of chunk unnamed-chunk-20" /></p>
+<p>Fatalities show the observer a different ranking. While tornados are still on the lead, excessive heat appears on the second place. The effects of heat seem diminishing besides tornados but when heat exercises its power it tends to take human lives and cause a lot of injuries.</p>
+</div>
+</div>
+<div id="summary" class="section level2">
+<h2>Summary</h2>
+<p>To summarize the findings concisely, one could say that high winds cause more injuries and they are more lethal by their nature. On the other hand flood is more harmful when severe weather events are analyzed from an economic point of view. This is however only a very brief analysis - although it took a look of time - and as such it should be treated only with caution.</p>
+</div>
+</div>
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+$(document).ready(function () {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+});
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
