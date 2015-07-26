@@ -1,0 +1,106 @@
+---
+title: "Statistical Inference Course Project"
+author: "Balint SZEBENYI"
+date: '2015-07-11'
+output:
+  pdf_document: default
+  html_document:
+    keep_md: yes
+    self_contained: no
+---
+```{r, echo = FALSE, message = FALSE}
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+library(reshape)
+```
+#Overview
+
+This document is my course project submission for the coursera course "Statistical Inference", which is part of the Data Science courses.
+
+The project has got two objectives. One montre carlo simulation to estimate the basic characteristics of the exponential distribution. The second part analyzes the ToothGrowth data of R to illustrate an inference example.
+
+As I am trying to learn dplyr and ggplot2 I have tried to answer the questions using these libraries.
+
+#The inference example
+
+The inference exercise is based on the ToothGrowth dataset, which summarizes the results of an experiment with 10 guineapigs, who received VitaminC at three dose levels (0.5, 1, 2 mgs) by two methods (orange juice - OJ, and asorbic acid - VC). The data consists of 30 observations altogether.
+
+##Basic summary of the data
+
+```{r, fig.height = 3}
+data(ToothGrowth)
+t <- tbl_df(ToothGrowth)
+
+ggplot(data = t,
+       aes(x = factor(dose),
+           y = len,
+           fill = supp)) +
+  geom_boxplot(position = "dodge") + 
+  labs(title = "The impact of dose is affecting the length of tooth growth",
+       x = "Dose (mg)",
+       y = "Length (mm)") +
+  scale_fill_discrete(name = "Supplement type",
+                      labels = c("Orange juice",
+                                 "Ascorbic acid"))
+```
+
+As it can be seen in the figure above the method how a certain dose is delivered affects its effect on teeth length. A straightforward tendency is shown on the graph, the higher the dose the longer the teeth will become. This relationship is however not linear, doubling the dose does not result in double teeth length. A jump of 0.5 milligrams from 0.5 to 1 makes a larger difference than a jump from 1 to 2 milligrams, at least in the case of ascorbic acid. Orange juice seems to have a positive effect on intake as it results in longer teeth in smaller doses than the same amount delivered via ascorbic acid. When the dose is 2 milligrams the teeth lengths are equal if only the average is observed, but a higher variance is visible in case os ascorbic acid. However, it cannot be announced that ascorbic acid is more unreliable, because in other cases the range of teeth length does not differ as much as in the case of orange juice.
+
+```{r}
+t %>%
+     group_by(dose, supp) %>%
+     summarise(mean(len), sd(len))
+```
+
+The boxplots show why it is important to observe not just the mean statistics of data but at least the standard deviation as well. If one observed only the mean then the differences in length spread would not be visible. With boxplots this can be visualized in a concise way. Considering only the averages one could say that orange juice is always better when it comes to smaller doses, but taking into consideration the standard deviation more detail comes into the sunlight.
+
+I have decided against analyzing histograms since the dataset would have been too small for that.
+
+##Does the intake method affect tooth growth?
+
+```{r}
+res1 <- t.test(x = ToothGrowth$len[ToothGrowth$supp == "OJ"],
+               y = ToothGrowth$len[ToothGrowth$supp == "VC"],
+               paired = FALSE,
+               var.equal = FALSE)
+```
+
+According to the output, it does not, since the p value is `r res1$p.value`. The $H_{0}$ hypothesis would be that the there is no difference between the two groups. At the standard 5% significance level one cannot reject the hypothesis, the two groups do not show enough difference which would underpin that the input method affects the experiment. It should be noted however that the sample size is rather small.
+
+*Assumptions:* I have made the test using unequal variances, to be on the safe side since there was no information about it in the [codebook](https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/ToothGrowth.html). The test was not a paired one as it has not been stated anywhere. If it would have been a paired test, then the p value would have been 0.00255 supporting a rejection of $H_{0}$.
+
+##Do higher doses lead to an increase in tooth growth?
+
+```{r}
+res2 <- t.test(x = ToothGrowth$len[ToothGrowth$dose == 0.5],
+               y = ToothGrowth$len[ToothGrowth$dose == 1.0],
+               paired = FALSE,
+               var.equal = FALSE,
+               alternative = "less")
+```
+
+Using a t test it can be stated that dose indeed affects tooth growth, since the p value is `r res2$p`. The same can be read from the confidenece interval. Stating that the confidence interval ranges from minus infinity to r `r res2$conf.int[[2]]` the test says that the difference between the two groups is at least 7.735 in the dimension of tooth length.
+
+```{r}
+res3 <- t.test(x = ToothGrowth$len[ToothGrowth$dose == 1.0],
+               y = ToothGrowth$len[ToothGrowth$dose == 2.0],
+               paired = FALSE,
+               var.equal = FALSE,
+               alternative = "less")
+```
+
+Observing the output of test 3 the same is true what we have found before: the group that received a dose of 2 mgs should have a mean that has a mean which is not more than `r res3$estimate[[1]]` plus 4.174.
+
+Knowing from the plots that there was a straight tendency without u or inverted u relations between the variables it can be stated that even the doses 0.5 and 2.0 do not lead to equal tooth growth.
+
+*My assumptions* in case test 2 and 3 are identical to that of test 1 with the addition of using one-sided tests because it was known which direction to test for.
+
+#Appendix
+
+##Test results
+```{r}
+print(res1)
+print(res2)
+print(res3)
+```
