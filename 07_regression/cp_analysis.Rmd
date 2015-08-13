@@ -1,0 +1,28 @@
+---
+title: "Transmission effect on fuel consumption"
+author: "Balint SZEBENYI"
+date: "2015. augusztus 13."
+output: html_document
+---
+
+```{r, echo = FALSE, message = FALSE}
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+library(reshape)
+data(mtcars)
+```
+
+#Executive summary
+
+```{r}
+summary(cars)
+```
+
+You can also embed plots, for example:
+
+```{r, echo=FALSE}
+plot(cars)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
