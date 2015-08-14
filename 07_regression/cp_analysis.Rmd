@@ -19,7 +19,19 @@ data(mtcars)
 summary(cars)
 ```
 
-You can also embed plots, for example:
+# Exploratory analysis
+The dataset, which was examined is the mtcars dataset that is distributed with R. The original data description is found at <https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/mtcars.html>, this is only a brief summary.
+
+There are eleven variables in the dataset, the two relevant ones are:
+* mpg - Fuel consumption, miles in gallon
+* am - Transmission: automatic (1) or manual (0) 
+
+'* cyl - Number of cylinders
+'* disp - Displacement in qubic inches
+'* hp - Gross horsepower
+'* wt - Weight in 1000 lbs
+
+The relationship between the two variables can be illustrated via the following plot.
 
 ```{r, echo=FALSE}
 plot(cars)
