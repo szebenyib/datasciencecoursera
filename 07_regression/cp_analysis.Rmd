@@ -6,8 +6,10 @@ output: html_document
 ---
 
 ```{r, echo = FALSE, message = FALSE}
+library(plyr)
 library(dplyr)
 library(ggplot2)
+library(GGally)
 library(gridExtra)
 library(reshape)
 data(mtcars)
@@ -31,10 +33,47 @@ There are eleven variables in the dataset, the two relevant ones are:
 '* hp - Gross horsepower
 '* wt - Weight in 1000 lbs
 
-The relationship between the two variables can be illustrated via the following plot.
+The relationship between the variables can be illustrated via the following plot. The other variables were omitted from the plot since they have shown linear correlation coefficients with relatively middle (0.5-0.6) strength.
 
-```{r, echo=FALSE}
-plot(cars)
+```{r, echo=FALSE, fig.height=4.5, cache=TRUE}
+df <- mtcars %>% select(mpg,
+                        cyl,
+                        disp,
+                        hp,
+                        wt,
+                        am)
+df <- df %>%
+  mutate(am = factor(am)) %>%
+  mutate(am = revalue(am,
+                      c("0" = "automatic",
+                        "1" = "manual")))
+df <- tbl_df(df)
+ggpairs(data = df,
+        title= "Plot matrix",
+        colour = "am")
 ```
 
+The plot reveals us that there is a relatively strong correlation between the fuel consumption and the selected variables. By looking at the connection between the transmission methods it is visible that manual transmission methods are likely to be present in vehicles that have a higher miles per gallon performance. It is also an observable tendency that vehicles with a lower weight and lower cylinders tend to use manual transmission.
+
+#Modeling
+
+The first model will be the simplest model. It just includes the binary variable "am" for transmission to try to explain the variation in mpg. This is actually nothing more than seeing if the group of automatic vehicles and manual vehicles have a difference in their consumption, by observing just this characteristic of the vehicle.
+```{r}
+fit1 <- lm(mpg ~ am, data = df)
+summary(fit)
+```
+
+It is found that approximately 36% percent of the variation in fuel consumption can be explained just by knowing which group a car belongs to.
+...
+However, it is very likely (based on the first plot of the study and the strong linear correlation coefficients) that there are confounding factors.
+Try a model with just am as an explanatory variable - tell what it actually means. confounding
+Add more variables.
+Add interactions as well / (or squared values too)
+Find the best model - R squared? + Residuals?
+Characterize it
+Summarize the results.
+
+If one was allowed to use principal component analysis then it would have made sense since hp and disp are something that can be derived from the same latent factor that we could call engine size.
+
+lm(am ~ wt)
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
