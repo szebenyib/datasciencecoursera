@@ -2,7 +2,7 @@
 title: "Transmission effect on fuel consumption"
 author: "Balint SZEBENYI"
 date: "2015. augusztus 13."
-output: html_document
+output: pdf_document
 ---
 
 ```{r, echo = FALSE, message = FALSE}
@@ -24,18 +24,17 @@ summary(cars)
 # Exploratory analysis
 The dataset, which was examined is the mtcars dataset that is distributed with R. The original data description is found at <https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/mtcars.html>, this is only a brief summary.
 
-There are eleven variables in the dataset, the two relevant ones are:
+There are eleven variables in the dataset, the six relevant ones are:
 * mpg - Fuel consumption, miles in gallon
 * am - Transmission: automatic (1) or manual (0) 
+* cyl - Number of cylinders
+* disp - Displacement in qubic inches
+* hp - Gross horsepower
+* wt - Weight in 1000 lbs
 
-'* cyl - Number of cylinders
-'* disp - Displacement in qubic inches
-'* hp - Gross horsepower
-'* wt - Weight in 1000 lbs
+The relationship between the variables can be illustrated via the following plot. Other variables were omitted from the plot for they have shown linear correlation coefficients with relatively middle (0.5-0.6) strength.
 
-The relationship between the variables can be illustrated via the following plot. The other variables were omitted from the plot since they have shown linear correlation coefficients with relatively middle (0.5-0.6) strength.
-
-No outliers were searched for.
+Outliers have not been searched for, the dataset is assumed to be clean for analyis being a default dataset.
 
 ```{r, echo=FALSE, fig.height=4.5, cache=TRUE}
 df <- mtcars %>% select(mpg,
@@ -55,18 +54,18 @@ ggpairs(data = df,
         colour = "am")
 ```
 
-The plot reveals us that there is a relatively strong correlation between the fuel consumption and the selected variables. By looking at the connection between the transmission methods it is visible that manual transmission methods are likely to be present in vehicles that have a higher miles per gallon performance. It is also an observable tendency that vehicles with a lower weight and lower cylinders tend to use manual transmission.
+The plot reveals us that there is a relative strong correlation between fuel consumption and the selected variables. By looking at the connection between transmission methods it is visible that manual transmission methods are likely to be present in vehicles that have a higher miles per gallon performance. It is also an observable tendency that vehicles with a lower weight and lower cylinders tend to use manual transmission. This is a crucial information in our analysis.
 
 #Modeling
 
-The first model will be the simplest model. It just includes the binary variable "am" for transmission to try to explain the variation in mpg. This is actually nothing more than seeing if the group of automatic vehicles and manual vehicles have a difference in their consumption, by observing just this characteristic of the vehicle.
+The first model will be the simplest model. It just includes the binary variable "am" for transmission to try to explain the variation in fuel consumption "mpg". This is actually nothing more than seeing if the group of automatic vehicles and manual vehicles have a difference in their consumption, by observing just this characteristic of the vehicle.
 
 ```{r}
 fit1 <- lm(mpg ~ am, data = df)
 summary(fit1)
 ```
 
-It is found that approximately 36% percent of the variation in fuel consumption can be explained just by knowing which group a car belongs to. Observing only the relevant boxplot it seems that a distinction can be made between the automatic and manual transmission equipped vehicles, however the two datasets overlap more than the interquantile ranges denoted by boxes on the boxplot would suggest. As an illustration see the violin plot next to the boxplot.
+It is found that approximately 36% percent of the variation in fuel consumption can be explained just by knowing which group a car belongs to. Observing only the relevant boxplot it seems that a distinction can be made between the automatic and manual transmission equipped vehicles, however the two datasets overlap more than the interquantile ranges denoted by boxes on the boxplot would suggest. As an illustration of this statement see the violin plot next to the boxplot.
 
 ```{r}
 g <- ggplot(data=df) + geom_boxplot(mapping = aes(x = am, y = mpg, colour = am))
@@ -74,51 +73,53 @@ h <- ggplot(data=df) + geom_violin(mapping = aes(x = am, y = mpg, colour = am))
 grid.arrange(g, h, ncol = 2)
 ```
 
-However, it is very likely (based on the first plot of the study and the strong linear correlation coefficients between the variables) that there are confounding factors and transmission by itself is not decisive. This means that the transmission itself is determined through other physical aspects of a vehicle and it is itself not a cause of higher or lower fuel consumption.
+However, it is very likely (based on the first plot of the study and the strong linear correlation coefficients between the variables) that there are confounding factors and transmission by itself is not decisive. This means that transmission could be determined through other physical aspects of a vehicle and it were itself not a cause of higher or lower fuel consumption.
 
 ```{r}
 fit2 <- lm(mpg ~ am + hp, data = mtcars)
 ```
 
-By fitting a regression that includes one additional explanatory variable, the horsepower, the model gets significantly better. The uncertainty regarding the fuel consumption can be reduced by 78.2 percent just by having information about these two aspects of a vehicle. Both the model and the variables individually are significant on all usual significance levels. The question still remains, whether the performance can be improved even further.
+By fitting a regression that includes one additional explanatory variable, the horsepower, the model gets significantly better. The uncertainty regarding the variance in fuel consumption can be reduced by 78.2 percent just by having information about these two aspects of a vehicle. Both the model and the variables individually are significant on all usual significance levels. The question still remains, whether the performance can be improved even further.
 
 ```{r}
-fit3 <- lm(mpg ~ am + wt + hp + cyl + disp, data = mtcars) ""lower p values -y throw it out s, try less addition try interaction; vif - handling by pca;
+fit3 <- lm(mpg ~ am + wt + hp + cyl + disp, data = mtcars)
 ```
 
-By adding more explanatory variables (the weight, the number of cylinders, the displacement) the model fails. Overall the model is still showing a significant F-statistic, however many of the variables are not significant, including the transmission! This renders model 3 useless.
+By adding more explanatory variables (the weight, the number of cylinders, the displacement) the model fails. Overall the model is still showing a significant F-statistic, however many of the variables are not significant, including transmission! This renders model 3 useless.
 
 ```{r}
 fit4 <- lm(mpg ~ am + wt + hp, data = mtcars)
 ```
 
-By trying to remove the insignificant variables but keeping the transmission in the model it was visible that the transmission by itself has not become significant which suggests that transmission does not have a measurable effect on the fuel consumption.
+By trying to remove the insignificant variables but keeping transmission in the model it was visible that transmission by itself has not become significant which suggests that transmission does not have a measurable effect on fuel consumption.
 
 ```{r}
 fit5 <- lm(mpg ~ wt + hp, data=mtcars)
 ```
 
-Taking it one step even further the previous statement is acknowledged by the R-squared values of model 4 and 5. Omitting the transmission information the model's performance has stayed almost the same, with R-squared 0.84 for model 4, and 0.827 for model 5. (Even though the adjusted R-squared value is higher in the case of model 4, the am variable is insignificant.)
+Taking it one step even further the previous statement is supported by the R-squared values of model 4 and 5. Omitting the transmission information the model's performance has stayed almost the same, with R-squared 0.84 for model 4, and 0.827 for model 5. (Even though the adjusted R-squared value is higher in the case of model 4, the "am"" variable is insignificant.)
 
-One possibility to improve model 2 is to allow for a different slope by adding interactions to the model.
+One possibility to improve model 2 is to allow for a different slope by adding interactions of fuel consumption and transmission art to the model.
 
 ```{r}
 fit6 <- lm(mpg ~ am + hp + I(am*hp), data = mtcars)
 ```
 
-However the summary of model 6 reveals that this has not improved the model at all.
-Therefore only model 2 is left for prediction as the "best" model, which is not supposed to be used to decide whether a vehicle will have a higher consumption based on its transmission.
+The summary of model 6 reveals that this has not improved the model at all.
+Therefore only model 2 is left for prediction as the "best" model, but it is also a useless model, which is not supposed to be used to decide whether a vehicle will have a higher consumption based on its transmission, because of confounding that has been shown before.
 
 ```{r}
 summary(fit2)
+confint(fit2)
 ```
 
-The model reveals that ceteris paribus (leaving everything else intact) switching a vehicle's transmission from automatic (0) to manual (1) the expected miles per (US) gallon will increase by 5.277. Once again, this is not to be taken as an effect of the transmission but rather as the effect of weight and other engine parameters that are tendentially present when the transmission is manual.
+The model reveals that ceteris paribus (leaving everything else intact) switching a vehicle's transmission from automatic (0) to manual (1) the expected miles that the vehicle can run per (US) gallon will increase on by 5.277. This value is however not an exact value. This value lies between 3.07 and 7.49 at a significance level of 5 percent. Once again, this is not to be taken as an effect of the transmission but rather as the effect of weight and other engine parameters that are tendentially present when the transmission is manual.
+
+To evaluate this best-but-do-not-use model, first the model itself is plotted, then the residuals.
 
 ```{r}
 df <- df %>% mutate(fit2predicted = predict(fit2))
 ```
-What is left is to use it as the best tool when it comes to analysis, but am is not usable
 
 ```{r}
 g <- ggplot(data = df)
@@ -126,17 +127,18 @@ g <- g + geom_line(aes(x = hp, y = fit2predicted, colour = am))
 g <- g + geom_point(aes(x = hp, y = mpg, colour = am))
 plot(g)
 ```
-This is an example why correlation by itself is not enough to show that there is a causal relationship between variables - confounding.
-Remark about the style - not an exec summary
-"?omit am"
-Try a model with just am as an explanatory variable - tell what it actually means. confounding
-Add more variables.
-Add interactions as well / (or squared values too)
-Find the best model - R squared? + Residuals?
-Characterize it
-Summarize the results."Paired sample would be the best to decide, weight is behind it!"
 
-If one was allowed to use principal component analysis then it would have made sense since hp and disp are something that can be derived from the same latent factor that we could call engine size.
+It is visible that there is a negative tendency between horsepower and available miles that can be reached with a single gallon. It should be mentioned again that the transmission seems to make a difference in the slope's intersect but there are confounding factors that lead to this.
 
-lm(am ~ wt)
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+ggplot(fortify(fit2), aes(.fitted, .resid)) + geom_point()
+```
+
+The reiduals do not show a clean pattern, which would signal additional extractable information in the variables. Therefore the model is acceptable, but still, not usable due to confounding.
+
+#Summary
+
+It has been shown that transmission by itself does not effect fuel consumtion. This result is only valid for this dataset. There is more to be discovered about fuel consumption but this dataset can only justify this result. Further research could use principal component analysis to group together variables that are bound together. Another possibility would be to use binary logistic regression to find out what influences transmission category the most. Last, but not least a paired dataset where the same model is equipped with manual and automatic transmission is the only viable path to grab the effect of transmission on fuel consumption.
+
+#inference!!!!
+
