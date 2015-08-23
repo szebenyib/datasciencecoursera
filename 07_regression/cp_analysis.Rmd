@@ -1,11 +1,11 @@
 ---
 title: "Transmission effect on fuel consumption"
 author: "Balint SZEBENYI"
-date: "2015. augusztus 13."
-output: pdf_document
+date: "2015-08-13"
+output: html_document
 ---
 
-```{r, echo = FALSE, message = FALSE}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 library(plyr)
 library(dplyr)
 library(ggplot2)
@@ -17,14 +17,13 @@ data(mtcars)
 
 #Executive summary
 
-```{r}
-summary(cars)
-```
+This document is an attempt to quantify the relationship between fuel consumption and transmission. It has been found that this relationship is non-existant on the 'mtcars' database. There are other factors like weight and engine parameters that are crucial when it comes to fuel consumption but transmission alone is not a reason for difference - based on the available data. A paired sample that uses the same models with all parameters equal except transmission is the only viable way to quantify a difference if it exists.
 
 # Exploratory analysis
 The dataset, which was examined is the mtcars dataset that is distributed with R. The original data description is found at <https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/mtcars.html>, this is only a brief summary.
 
 There are eleven variables in the dataset, the six relevant ones are:
+
 * mpg - Fuel consumption, miles in gallon
 * am - Transmission: automatic (1) or manual (0) 
 * cyl - Number of cylinders
@@ -36,7 +35,7 @@ The relationship between the variables can be illustrated via the following plot
 
 Outliers have not been searched for, the dataset is assumed to be clean for analyis being a default dataset.
 
-```{r, echo=FALSE, fig.height=4.5, cache=TRUE}
+```{r, echo=FALSE, fig.height=4, cache=TRUE, message = FALSE, warning = FALSE}
 df <- mtcars %>% select(mpg,
                         cyl,
                         disp,
@@ -58,18 +57,19 @@ The plot reveals us that there is a relative strong correlation between fuel con
 
 #Modeling
 
+*The model's summary are not included but since the analysis is available via github and knitr, they can be obtained any time. The important parameters of the models' have been cited in the text though.*
+
 The first model will be the simplest model. It just includes the binary variable "am" for transmission to try to explain the variation in fuel consumption "mpg". This is actually nothing more than seeing if the group of automatic vehicles and manual vehicles have a difference in their consumption, by observing just this characteristic of the vehicle.
 
 ```{r}
 fit1 <- lm(mpg ~ am, data = df)
-summary(fit1)
 ```
 
 It is found that approximately 36% percent of the variation in fuel consumption can be explained just by knowing which group a car belongs to. Observing only the relevant boxplot it seems that a distinction can be made between the automatic and manual transmission equipped vehicles, however the two datasets overlap more than the interquantile ranges denoted by boxes on the boxplot would suggest. As an illustration of this statement see the violin plot next to the boxplot.
 
-```{r}
-g <- ggplot(data=df) + geom_boxplot(mapping = aes(x = am, y = mpg, colour = am))
-h <- ggplot(data=df) + geom_violin(mapping = aes(x = am, y = mpg, colour = am))
+```{r, fig.height = 3}
+g <- ggplot(data=df) + geom_boxplot(mapping = aes(x = am, y = mpg, colour = am)) + labs(title = "Boxplot", x = "Transmission", y = "Miles per US galon")
+h <- ggplot(data=df) + geom_violin(mapping = aes(x = am, y = mpg, colour = am)) + labs(title = "Boxplot", x = "Transmission", y = "Miles per US galon")
 grid.arrange(g, h, ncol = 2)
 ```
 
@@ -109,7 +109,7 @@ The summary of model 6 reveals that this has not improved the model at all.
 Therefore only model 2 is left for prediction as the "best" model, but it is also a useless model, which is not supposed to be used to decide whether a vehicle will have a higher consumption based on its transmission, because of confounding that has been shown before.
 
 ```{r}
-summary(fit2)
+fit2$coefficients
 confint(fit2)
 ```
 
@@ -118,20 +118,22 @@ The model reveals that ceteris paribus (leaving everything else intact) switchin
 To evaluate this best-but-do-not-use model, first the model itself is plotted, then the residuals.
 
 ```{r}
-df <- df %>% mutate(fit2predicted = predict(fit2))
+df <- df %>%
+  mutate(fit2predicted = predict(fit2))
 ```
 
-```{r}
+```{r, fig.height = 3}
 g <- ggplot(data = df)
 g <- g + geom_line(aes(x = hp, y = fit2predicted, colour = am))
 g <- g + geom_point(aes(x = hp, y = mpg, colour = am))
+g <- g + labs(title = "Model 2", x = "Horse power", y = "Miles per US galon")
 plot(g)
 ```
 
 It is visible that there is a negative tendency between horsepower and available miles that can be reached with a single gallon. It should be mentioned again that the transmission seems to make a difference in the slope's intersect but there are confounding factors that lead to this.
 
-```{r}
-ggplot(fortify(fit2), aes(.fitted, .resid)) + geom_point()
+```{r, fig.height = 3}
+ggplot(fortify(fit2), aes(.fitted, .resid)) + geom_point() + labs(title = "Fitted vs. residual", x = "Fitted", y = "Residual")
 ```
 
 The reiduals do not show a clean pattern, which would signal additional extractable information in the variables. Therefore the model is acceptable, but still, not usable due to confounding.
@@ -139,6 +141,3 @@ The reiduals do not show a clean pattern, which would signal additional extracta
 #Summary
 
 It has been shown that transmission by itself does not effect fuel consumtion. This result is only valid for this dataset. There is more to be discovered about fuel consumption but this dataset can only justify this result. Further research could use principal component analysis to group together variables that are bound together. Another possibility would be to use binary logistic regression to find out what influences transmission category the most. Last, but not least a paired dataset where the same model is equipped with manual and automatic transmission is the only viable path to grab the effect of transmission on fuel consumption.
-
-#inference!!!!
-

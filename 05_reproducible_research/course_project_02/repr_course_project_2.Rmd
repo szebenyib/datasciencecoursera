@@ -5,7 +5,7 @@ date: '2015-05-22'
 output: 
   html_document:
     keep_md: true
-    self_contained: false
+    self_contained: true
 ---
 
 #A glimpse into the effects of severe weather events in the United States
