@@ -1,0 +1,61 @@
+---
+title: "Supplementary analysis"
+author: "Balint SZEBENYI"
+date: "2015. október 19."
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r cars, echo=FALSE}
+library(ggplot2)
+library(dplyr)
+```
+
+#Loading data
+```{r}
+df <- read.csv(file = "adult.data",
+               header = FALSE,
+               sep=",",
+               stringsAsFactors = FALSE)
+colnames(df) <- c("age",
+                  "work_class",
+                  "fnlwgt",
+                  "education",
+                  "years_in_education",
+                  "marital_status",
+                  "job",
+                  "relationship_status",
+                  "race",
+                  "sex",
+                  "capital_gain",
+                  "capital_loss",
+                  "hours_per_week",
+                  "native_country",
+                  "salary_above_50k")
+#remove whitspace
+converted_cols <- as.data.frame(lapply(X = df[c("work_class", "education",
+                                              "marital_status", "job",
+                                              "relationship_status", "race",
+                                              "sex", "native_country",
+                                              "salary_above_50k")],
+                                       FUN = trimws))
+
+df <- tbl_df(df)
+df <- df %>%
+  mutate(salary_above_50k = ifelse(as.character(salary_above_50k) == ">50K",
+                                   yes = TRUE,
+                                   no = FALSE)) %>%
+  mutate_each(funs(trimws),
+              work_class, education, marital_status, job,
+              relationship_status, race, sex, native_country,
+              salary_above_50k)
+  # mutate(age = as.numeric(age)) %>%
+  # mutate(years_in_education = as.numeric(years_in_education)) %>%
+  # mutate(capital_gain = as.numeric(capital_gain)) %>%
+  # mutate(capital_loss = as.numeric(capital_loss)) %>%
+  # mutate(hours_per_week = as.numeric(hours_per_week))
+```
+
