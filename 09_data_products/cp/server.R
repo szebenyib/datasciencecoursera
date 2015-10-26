@@ -21,12 +21,14 @@ fit_model <- function(dependent, explanatory_variables, df) {
 }
 shinyServer(
   function(input, output) {
-    fit <- fit_model(dependent = "salary",
-                     explanatory_variables = "yrs.service",
-                     df = df)
-    fit_summary <- summary(fit)
-    output$r_squared <- renderPrint({fit_summary$r.squared})
-    output$adjusted_r_squared <- renderPrint({fit_summary$adj.r.squared})
-    output$coefficients <- renderPrint({fit_summary$coefficients})
+    fit <- reactive({fit_model(dependent = "salary",
+                     explanatory_variables = input$explanatory_vars,
+                     df = df)})
+    fit_summary <- reactive({summary(fit())})
+    output$fit_plot <- renderPlot({pairs.panels(df)})
+    output$r_squared <- renderPrint({fit_summary()$r.squared})
+    output$adjusted_r_squared <- renderPrint({fit_summary()$adj.r.squared})
+    output$coefficients <- renderPrint({fit_summary()$coefficients})
+    output$explanatory_vars <- renderPrint({input$explanatory_vars})
   }
 )

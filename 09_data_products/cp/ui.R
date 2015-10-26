@@ -7,19 +7,23 @@ shinyUI(pageWithSidebar(
                 choices = names(df),
                 selected = "salary"),
     checkboxGroupInput('explanatory_vars', 'Explanatory variables',
-                       c('Value1' = '1',
-                         'Value2' = '2',
-                         'Value3' = '3')),
-    dateInput('date', 'Date:')
+                       c('Rank' = 'rank',
+                         'Discipline' = 'discipline',
+                         'Years since PhD.' = 'yrs.since.phd',
+                         'Years in service' = 'yrs.service',
+                         'Sex' = 'sex'),
+                       selected = 'yrs.service')
     #submitButton('Submit') #optional
   ),
   mainPanel(
+    verbatimTextOutput('explanatory_vars'),
     h3('Model Summary'),
     h4("R-squared"),
     verbatimTextOutput('r_squared'),
     h4("Adjusted R-squared"),
     verbatimTextOutput('adjusted_r_squared'),
     h4("Coefficients"),
-    verbatimTextOutput('coefficients')
+    verbatimTextOutput('coefficients'),
+    plotOutput('fit_plot')
   )
 ))
