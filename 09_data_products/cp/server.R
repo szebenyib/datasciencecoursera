@@ -5,6 +5,7 @@ library(ggplot2)
 library(dplyr)
 library(psych)
 library(GGally)
+library(car)
 ## Load data
 df <- read.csv(file = "salaries.csv",
                header = TRUE,
@@ -19,16 +20,29 @@ fit_model <- function(dependent, explanatory_variables, df) {
                       data = df))
   return(fit)
 }
+percent <- function(n) {
+  paste(sprintf("%0.1f",
+                n * 100),
+        '%',
+        sep = "")
+}
 shinyServer(
   function(input, output) {
     fit <- reactive({fit_model(dependent = "salary",
                      explanatory_variables = input$explanatory_vars,
                      df = df)})
     fit_summary <- reactive({summary(fit())})
+    set_vif <- reactive({
+      if (length(input$explanatory_vars) > 1) {
+        vif(fit())
+      } else {
+        "-"
+      }
+    })
     output$fit_plot <- renderPlot({pairs.panels(df)})
-    output$r_squared <- renderPrint({fit_summary()$r.squared})
-    output$adjusted_r_squared <- renderPrint({fit_summary()$adj.r.squared})
-    output$coefficients <- renderPrint({fit_summary()$coefficients})
-    output$explanatory_vars <- renderPrint({input$explanatory_vars})
+    output$r_squared <- renderText({percent(fit_summary()$r.squared)})
+    output$adjusted_r_squared <- renderText({percent(fit_summary()$adj.r.squared)})
+    output$coefficients <- renderTable({fit_summary()$coefficients})
+    output$vif <- renderText({set_vif()})
   }
 )

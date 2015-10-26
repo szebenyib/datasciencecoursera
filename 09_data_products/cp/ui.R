@@ -4,7 +4,8 @@ shinyUI(pageWithSidebar(
   sidebarPanel(
     h3('Settings'),
     selectInput('dependent_var', 'Dependent variable',
-                choices = names(df),
+                choices = "salary",
+#restriction                choices = names(df),
                 selected = "salary"),
     checkboxGroupInput('explanatory_vars', 'Explanatory variables',
                        c('Rank' = 'rank',
@@ -16,14 +17,19 @@ shinyUI(pageWithSidebar(
     #submitButton('Submit') #optional
   ),
   mainPanel(
-    verbatimTextOutput('explanatory_vars'),
-    h3('Model Summary'),
-    h4("R-squared"),
-    verbatimTextOutput('r_squared'),
-    h4("Adjusted R-squared"),
-    verbatimTextOutput('adjusted_r_squared'),
-    h4("Coefficients"),
-    verbatimTextOutput('coefficients'),
-    plotOutput('fit_plot')
+    tabsetPanel(position = "above",
+      tabPanel("Decription",
+               p('This page was created as my course project
+                           for the coursera class: Developing data products.')),
+      tabPanel("Scatterplot",
+               plotOutput('fit_plot')),
+      tabPanel("Model",
+               h3('Model Summary'),
+               h4("R-squared"), textOutput('r_squared'),
+               h4("Adjusted R-squared"), textOutput('adjusted_r_squared'),
+               h4("Coefficients"), htmlOutput('coefficients'),
+               h4("VIF"), htmlOutput('vif'))
+      )
+    )
   )
-))
+)

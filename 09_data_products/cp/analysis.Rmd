@@ -36,5 +36,8 @@ fit_model <- function(dependent, explanatory_variables, df) {
 ```
 
 ```{r}
-a <- fit_model(dependent = "salary", explanatory_variables = "yrs.service", df = df)
+a <- fit_model(dependent = "salary",
+               explanatory_variables = c("yrs.service",
+                                         "yrs.since.phd"),
+              df = df)
 ```
