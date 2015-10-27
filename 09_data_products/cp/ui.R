@@ -24,7 +24,7 @@ shinyUI(pageWithSidebar(
       tabPanel("Univariate",
                selectInput(inputId = "univariate_var",
                            label = "Choose a variable to analyze",
-                           choices = names(df),
+                           choices = names(df)[!(names(df) %in% c("X"))],
                            selected = "salary"),
                plotOutput('uni_plot')),
                #summary
