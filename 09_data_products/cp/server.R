@@ -28,6 +28,14 @@ percent <- function(n) {
 }
 shinyServer(
   function(input, output, session) {
+
+    # Univariate tab
+    output$uni_plot <- renderPlot({hist(df[ , input$univariate_var])})
+
+    # Multivariate tab
+    output$coefficients <- renderTable({fit_summary()$coefficients})
+
+    # Model tab
     fit <- reactive({fit_model(dependent = input$dependent_var,
                      explanatory_variables = input$explanatory_vars,
                      df = df)})
@@ -43,9 +51,10 @@ shinyServer(
                                                         input$explanatory_vars)])})
     output$r_squared <- renderText({percent(fit_summary()$r.squared)})
     output$adjusted_r_squared <- renderText({percent(fit_summary()$adj.r.squared)})
-    output$coefficients <- renderTable({fit_summary()$coefficients})
     output$vif <- renderPrint({set_vif()})
-    #At least one checkbox has to be selected
+
+    # Settings panel
+    # At least one checkbox has to be selected
     observe({
       if(length(input$explanatory_vars) < 1) {
         updateCheckboxGroupInput(session,

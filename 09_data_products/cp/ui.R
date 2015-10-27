@@ -18,9 +18,17 @@ shinyUI(pageWithSidebar(
   ),
   mainPanel(
     tabsetPanel(position = "above",
-      tabPanel("Decription",
+      tabPanel("Description",
                p('This page was created as my course project
                            for the coursera class: Developing data products.')),
+      tabPanel("Univariate",
+               selectInput(inputId = "univariate_var",
+                           label = "Choose a variable to analyze",
+                           choices = names(df),
+                           selected = "salary"),
+               plotOutput('uni_plot')),
+               #summary
+               #plot
       tabPanel("Scatterplot",
                plotOutput('fit_plot')),
       tabPanel("Model",
