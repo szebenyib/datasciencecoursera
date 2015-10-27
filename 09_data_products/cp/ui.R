@@ -28,7 +28,7 @@ shinyUI(pageWithSidebar(
                h4("R-squared"), textOutput('r_squared'),
                h4("Adjusted R-squared"), textOutput('adjusted_r_squared'),
                h4("Coefficients"), htmlOutput('coefficients'),
-               h4("VIF"), htmlOutput('vif'))
+               h4("VIF"), verbatimTextOutput('vif'))
       )
     )
   )

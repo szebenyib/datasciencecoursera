@@ -28,7 +28,7 @@ percent <- function(n) {
 }
 shinyServer(
   function(input, output) {
-    fit <- reactive({fit_model(dependent = "salary",
+    fit <- reactive({fit_model(dependent = input$dependent_var,
                      explanatory_variables = input$explanatory_vars,
                      df = df)})
     fit_summary <- reactive({summary(fit())})
@@ -39,10 +39,11 @@ shinyServer(
         "-"
       }
     })
-    output$fit_plot <- renderPlot({pairs.panels(df)})
+    output$fit_plot <- renderPlot({pairs.panels(df[ , c(input$dependent_var,
+                                                        input$explanatory_vars)])})
     output$r_squared <- renderText({percent(fit_summary()$r.squared)})
     output$adjusted_r_squared <- renderText({percent(fit_summary()$adj.r.squared)})
     output$coefficients <- renderTable({fit_summary()$coefficients})
-    output$vif <- renderText({set_vif()})
+    output$vif <- renderPrint({set_vif()})
   }
 )
