@@ -27,7 +27,7 @@ percent <- function(n) {
         sep = "")
 }
 shinyServer(
-  function(input, output) {
+  function(input, output, session) {
     fit <- reactive({fit_model(dependent = input$dependent_var,
                      explanatory_variables = input$explanatory_vars,
                      df = df)})
@@ -45,5 +45,13 @@ shinyServer(
     output$adjusted_r_squared <- renderText({percent(fit_summary()$adj.r.squared)})
     output$coefficients <- renderTable({fit_summary()$coefficients})
     output$vif <- renderPrint({set_vif()})
+    #At least one checkbox has to be selected
+    observe({
+      if(length(input$explanatory_vars) < 1) {
+        updateCheckboxGroupInput(session,
+                                 "explanatory_vars",
+                                 selected= "yrs.service")
+      }
+    })
   }
 )
