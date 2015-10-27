@@ -42,3 +42,25 @@ a <- fit_model(dependent = "salary",
                                          "rank"),
               df = df)
 ```
+
+```{r}
+q <- ggplot(data = df)
+q <- q + geom_histogram(aes(x = yrs.service))
+q <- q + labs(title = "Histogram")
+q
+```
+
+```{r}
+q <- ggplot(data = df)
+q <- q + geom_violin(aes(x = rank, y = salary, color = rank))
+q <- q + labs(title = "Violin")
+q
+```
+
+```{r}
+f <- function(uni_var, dependent_var)
+q <- ggplot(data = df)
+q <- q + geom_violin(aes(x = uni_var, y = dependent_var, color = dependent_var)
+q <- q + labs(title = "Violin")
+q
+```

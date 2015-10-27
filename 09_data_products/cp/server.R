@@ -6,11 +6,10 @@ library(dplyr)
 library(psych)
 library(GGally)
 library(car)
-## Load data
-df <- read.csv(file = "salaries.csv",
-               header = TRUE,
-               sep=",")
 
+## Data loading is taken care of globally
+
+## Define functions
 fit_model <- function(dependent, explanatory_variables, df) {
   f <- paste(dependent, "~",
              paste(explanatory_variables,
@@ -26,11 +25,30 @@ percent <- function(n) {
         '%',
         sep = "")
 }
+gen_plot <- function(uni_var, dependent_var) {
+  q <- ggplot(data = df) #df is global
+  if (class(df[ , uni_var]) == "integer") {
+    q <- q + geom_histogram(aes_string(x = uni_var))
+    q <- q + labs(title = "Histogram")
+  } else if (class(df[ , uni_var]) == "factor") {
+    q <- q + geom_violin(aes_string(x = uni_var,
+                                    y = dependent_var,
+                                    color = uni_var))
+    q <- q + labs(title = "Violin plot")
+  } else {
+    q <- NULL
+  }
+  return(q)
+}
+
+# Run every time
 shinyServer(
   function(input, output, session) {
 
     # Univariate tab
-    output$uni_plot <- renderPlot({hist(df[ , input$univariate_var])})
+    generated_plot <- reactive({gen_plot(uni_var = input$univariate_var,
+                                         dependent_var = input$dependent_var)})
+    output$uni_plot <- renderPlot({generated_plot()})
 
     # Multivariate tab
     output$coefficients <- renderTable({fit_summary()$coefficients})
