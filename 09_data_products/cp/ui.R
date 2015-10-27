@@ -38,9 +38,8 @@ shinyUI(pageWithSidebar(
                            label = "Choose a variable to analyze",
                            choices = names(df)[!(names(df) %in% c("X"))],
                            selected = "salary"),
-               plotOutput('uni_plot')),
-               #summary
-               #plot
+               plotOutput('uni_plot'),
+               verbatimTextOutput('uni_summary')),
       tabPanel("Multivariate",
                plotOutput('fit_plot')),
       tabPanel("Model",

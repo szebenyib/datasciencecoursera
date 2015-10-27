@@ -49,6 +49,7 @@ shinyServer(
     generated_plot <- reactive({gen_plot(uni_var = input$univariate_var,
                                          dependent_var = input$dependent_var)})
     output$uni_plot <- renderPlot({generated_plot()})
+    output$uni_summary <- renderPrint({summary(df[ ,input$univariate_var])})
 
     # Multivariate tab
     output$coefficients <- renderTable({fit_summary()$coefficients})
