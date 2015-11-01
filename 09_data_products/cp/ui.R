@@ -33,6 +33,13 @@ shinyUI(pageWithSidebar(
                p('The model section reveals a simple regression model with the
                 possibility given to the user to choose the explanatory
                  variables.')),
+      tabPanel("Dataset",
+               p("The data comes from Vincent Arel-Bundock, and it is available
+                 from the following website:"),
+              a("https://vincentarelbundock.github.io/Rdatasets/datasets.html"),
+              p("It contains 397 observations of 7 variables."),
+              p("The table below reveals the dataset."),
+              dataTableOutput("df")),
       tabPanel("Univariate",
                selectInput(inputId = "univariate_var",
                            label = "Choose a variable to analyze",

@@ -44,7 +44,8 @@ gen_plot <- function(uni_var, dependent_var) {
 # Run every time
 shinyServer(
   function(input, output, session) {
-
+    # Dataset tab
+    output$df <- renderDataTable(df)
     # Univariate tab
     generated_plot <- reactive({gen_plot(uni_var = input$univariate_var,
                                          dependent_var = input$dependent_var)})
