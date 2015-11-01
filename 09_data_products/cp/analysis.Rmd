@@ -46,6 +46,18 @@ a <- fit_model(dependent = "salary",
 ```{r}
 q <- ggplot(data = df)
 q <- q + geom_histogram(aes(x = yrs.service))
+q <- q + geom_vline(xintercept = mean(df[ ,c("yrs.service")]),
+                    color = "salmon")
+q <- q + geom_text(aes(x = mean(df[ ,c("yrs.service")]),
+                       y = 5,
+                       label = "Mean",
+                       color = "salmon"), show_guide = FALSE)
+q <- q + geom_vline(xintercept = median(df[ ,c("yrs.service")]),
+                    color = "slateblue")
+q <- q + geom_text(aes(x = median(df[ ,c("yrs.service")]),
+                       y = 5,
+                       label = "Median",
+                       colour = "slateblue"), show_guide = FALSE)
 q <- q + labs(title = "Histogram")
 q
 ```
@@ -53,14 +65,6 @@ q
 ```{r}
 q <- ggplot(data = df)
 q <- q + geom_violin(aes(x = rank, y = salary, color = rank))
-q <- q + labs(title = "Violin")
-q
-```
-
-```{r}
-f <- function(uni_var, dependent_var)
-q <- ggplot(data = df)
-q <- q + geom_violin(aes(x = uni_var, y = dependent_var, color = dependent_var)
 q <- q + labs(title = "Violin")
 q
 ```
