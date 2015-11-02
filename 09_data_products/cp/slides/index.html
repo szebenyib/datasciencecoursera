@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Quick Regression via Shiny</title>
+  <meta charset="utf-8">
+  <meta name="description" content="Quick Regression via Shiny">
+  <meta name="author" content="Balint SZEBENYI">
+  <meta name="generator" content="slidify" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta http-equiv="X-UA-Compatible" content="chrome=1">
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/default.css" media="all" >
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/phone.css" 
+    media="only screen and (max-device-width: 480px)" >
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/slidify.css" >
+  <link rel="stylesheet" href="libraries/highlighters/highlight.js/css/tomorrow.css" />
+  <base target="_blank"> <!-- This amazingness opens all links in a new tab. -->  <link rel=stylesheet href="./assets/css/ribbons.css"></link>
+
+  
+  <!-- Grab CDN jQuery, fall back to local if offline -->
+  <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.7.min.js"></script>
+  <script>window.jQuery || document.write('<script src="libraries/widgets/quiz/js/jquery.js"><\/script>')</script> 
+  <script data-main="libraries/frameworks/io2012/js/slides" 
+    src="libraries/frameworks/io2012/js/require-1.0.8.min.js">
+  </script>
+  
+  
+
+</head>
+<body style="opacity: 0">
+  <slides class="layout-widescreen">
+    
+    <!-- LOGO SLIDE -->
+        <slide class="title-slide segue nobackground">
+  <hgroup class="auto-fadein">
+    <h1>Quick Regression via Shiny</h1>
+    <h2>Course Project</h2>
+    <p>Balint SZEBENYI<br/></p>
+  </hgroup>
+  <article></article>  
+</slide>
+    
+
+    <!-- SLIDES -->
+    <slide class="" id="slide-1" style="background:;">
+  <hgroup>
+    <h2>Intro</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>Have you ever wondered what it would be like...</p>
+
+<ul>
+<li>to show your model interactively?</li>
+<li>to answer what-if questions on-the-fly?</li>
+<li>to have more graphs, tables, text visible next to each other?</li>
+<li>to deploy your work via a simple link?</li>
+</ul>
+
+<p>Then you should definitely try shiny.</p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>Technology in a nutshell</h2>
+  </hgroup>
+  <article data-timings="">
+    <ol>
+<li>Create your analysis in R as you would do normally.</li>
+<li>Organize it into a server side logic (responsible for calculations), and client side logic (responsible for display organization)</li>
+<li>Make use of the available input controls and the responding output elements.</li>
+<li>Publish it to rpubs or github.</li>
+<li>Send the link to your users.</li>
+</ol>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-3" style="background:;">
+  <hgroup>
+    <h2>My example</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>I have created a simple shiny app that lets you discover the interactivity possibilities in shiny. </p>
+
+<p>The used database is the salaries dataset by Vincent Arel-Bundock. It is available in the &#39;car&#39; package.</p>
+
+<p>A glimpse into the dataset:</p>
+
+<pre><code class="r">dim(Salaries)
+</code></pre>
+
+<pre><code>## [1] 397   6
+</code></pre>
+
+<pre><code class="r">head(Salaries, n = 2)
+</code></pre>
+
+<pre><code>##   rank discipline yrs.since.phd yrs.service  sex salary
+## 1 Prof          B            19          18 Male 139750
+## 2 Prof          B            20          16 Male 173200
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-4" style="background:;">
+  <hgroup>
+    <h2>Analysis</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>I have provided the app with two pages for analysis: a univariate and a multivariate tab.</p>
+
+<p>Univariate tab: it displays a simple historgram in case of numerical variables and a violin plot for chategorical (factor) variables. The latter is not &quot;truly univariate&quot; but I thought it means more to show the relation to the dependent variable than to display only a few summary numbers.</p>
+
+<p>Multivariate tab: it displays a pairs plot, known as scatterplot for all the variables. Use this to observe the connection between variables.</p>
+
+<p>Both tabs change their content based on input conrols!</p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-5" style="background:;">
+  <hgroup>
+    <h2>Example: univariate tab</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>The following would be shown if you were to choose rank in the dropdown list.</p>
+
+<p><img src="assets/fig/unnamed-chunk-3-1.png" alt="plot of chunk unnamed-chunk-3"> </p>
+
+<p>The background code:</p>
+
+<pre><code>q &lt;- ggplot(data = Salaries)
+q &lt;- q + geom_violin(aes(x = rank, y = salary, color = rank))
+print(q)
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-6" style="background:;">
+  <hgroup>
+    <h2>The model</h2>
+  </hgroup>
+  <article data-timings="">
+    
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-7" style="background:;">
+  <hgroup>
+    <h2>So...</h2>
+  </hgroup>
+  <article data-timings="">
+    <ol>
+<li>The link:</li>
+<li>Any questions?</li>
+<li>Discover it for yourself! :)</li>
+</ol>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+    <slide class="backdrop"></slide>
+  </slides>
+  <div class="pagination pagination-small" id='io2012-ptoc' style="display:none;">
+    <ul>
+      <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=1 title='Intro'>
+         1
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=2 title='Technology in a nutshell'>
+         2
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=3 title='My example'>
+         3
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=4 title='Analysis'>
+         4
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=5 title='Example: univariate tab'>
+         5
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=6 title='The model'>
+         6
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=7 title='So...'>
+         7
+      </a>
+    </li>
+  </ul>
+  </div>  <!--[if IE]>
+    <script 
+      src="http://ajax.googleapis.com/ajax/libs/chrome-frame/1/CFInstall.min.js">  
+    </script>
+    <script>CFInstall.check({mode: 'overlay'});</script>
+  <![endif]-->
+</body>
+  <!-- Load Javascripts for Widgets -->
+  
+  <!-- LOAD HIGHLIGHTER JS FILES -->
+  <script src="libraries/highlighters/highlight.js/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <!-- DONE LOADING HIGHLIGHTER JS FILES -->
+   
+  </html>
