@@ -1,0 +1,217 @@
+---
+title: "Human Activity Recognition using Machine Learning Techniques"
+author: "Balint SZEBENYI"
+date: '2015-09-22'
+output:
+  html_document:
+    keep_md: yes
+    self_contained: no
+  pdf_document: default
+---
+
+```{r, echo = FALSE, message = FALSE}
+library(plyr)
+library(dplyr)
+library(ggplot2)
+library(randomForest)
+library(caret)
+# library(doParallel)
+# library(doMC)
+# registerDoMC(cores=2)
+# library(gridExtra)
+# library(reshape)
+```
+
+#Overview
+
+The purpose of this paper is to carry out Human Activity Recognition using machine learning techniques, which were briefly introduced in the coursera class: Practical Machine Learning. The dataset in use contains six participants' weight lifting exercises. Once they have lifted the dumbbells properly and four times in a wrong way. The goal is to find a model that can predict in which way the exercise has been carried out based on available sensor data.
+
+The first step was to read the data.
+```{r}
+dir <- "~/ml/cp/"
+file <- "pml-training.csv"
+filepath <- paste(dir,
+									file,
+									sep = "")
+df <- read.csv(file = filepath,
+							 na.strings = c("NA", "", "#DIV/0!"))
+df <- tbl_df(df)
+dim(df)
+
+file <- "pml-testing.csv"
+filepath <- paste(dir,
+									file,
+									sep = "")
+validation <- read.csv(file = filepath,
+							 na.strings = c("NA", "", "#DIV/0!"))
+validation <- tbl_df(validation)
+```
+
+# Data cleanup
+
+Having reviewed the data loading after the first try two things were visible. There were a lot of features with 19216 NA values and there were also NA values coded in the dataset as "#DIV/0!". Therefore data loading has been set to treat "#DIV/0!" variables as NA. I have chosen to do that as I have not found any information about the businees case meaning of division with zero and this way I could treat them similarly to NAs. This has also helped the software to recognise the feature class properly.
+
+As the dataset holds `nrow(df)` rows 19216 NA values suggest that variables that contain NA values to this extent are unusable, which has lead to the removal of them. This is not something that I have wanted to "test", so I have removed the variables before splitting the dataset. Without removing them there were no complete cases. I have also removed the user name, timestamp information and the window variables. The former two provide information about cases - this is not available when the built model will be in use on different devices. The latter group consists of variables that were uninterpretable for me without a codebook - something I would not let go so easily in a live environment.
+
+The *imputation* of NA values was discarded for two reasons. First, there was no codebook, which could have helped in the process by explaining the contents of the variables. Second, that would have been a separate course project by itself.
+
+```{r}
+remove_na_vars <- function(df) {
+	df <- df %>%
+		select(-kurtosis_roll_belt, -kurtosis_picth_belt, -kurtosis_yaw_belt,
+					 -skewness_roll_belt, -skewness_roll_belt.1, -skewness_yaw_belt,
+					 -max_roll_belt, -max_picth_belt, -max_yaw_belt, -min_roll_belt,
+					 -min_pitch_belt, -min_yaw_belt, -min_roll_belt, -min_pitch_belt,
+					 -min_yaw_belt, -amplitude_roll_belt, -amplitude_pitch_belt,
+					 -amplitude_yaw_belt, -var_total_accel_belt, -avg_roll_belt,
+					 -stddev_roll_belt, -var_roll_belt, -avg_pitch_belt, -stddev_pitch_belt,
+					 -var_pitch_belt, -avg_yaw_belt, -stddev_yaw_belt, -var_yaw_belt,
+					 -var_accel_arm, -avg_roll_arm, -stddev_roll_arm, -var_roll_arm,
+					 -avg_pitch_arm, -stddev_pitch_arm, -var_pitch_arm, -avg_yaw_arm,
+					 -stddev_yaw_arm, -var_yaw_arm, -kurtosis_roll_arm, -kurtosis_picth_arm,
+					 -kurtosis_yaw_arm, -skewness_roll_arm, -skewness_pitch_arm,
+					 -skewness_yaw_arm, -max_roll_arm, -max_picth_arm, -max_yaw_arm,
+					 -min_roll_arm, -min_pitch_arm, -min_yaw_arm, -amplitude_roll_arm,
+					 -amplitude_pitch_arm, -amplitude_yaw_arm,
+					 -kurtosis_roll_dumbbell, -kurtosis_picth_dumbbell,
+					 -kurtosis_yaw_dumbbell, -skewness_roll_dumbbell,
+					 -skewness_pitch_dumbbell, -skewness_yaw_dumbbell,
+					 -max_roll_dumbbell, -max_picth_dumbbell,
+					 -max_yaw_dumbbell, -min_roll_dumbbell, -min_pitch_dumbbell,
+					 -min_yaw_dumbbell, -amplitude_roll_dumbbell,
+					 -amplitude_pitch_dumbbell, -amplitude_yaw_dumbbell,
+					 -var_accel_dumbbell, -avg_roll_dumbbell, -stddev_roll_dumbbell,
+					 -var_roll_dumbbell, -avg_pitch_dumbbell, -stddev_pitch_dumbbell,
+					 -var_pitch_dumbbell, -avg_yaw_dumbbell, -stddev_yaw_dumbbell,
+					 -var_yaw_dumbbell, -kurtosis_roll_forearm, -kurtosis_picth_forearm,
+					 -kurtosis_yaw_forearm, -skewness_roll_forearm,
+					 -skewness_pitch_forearm, -skewness_yaw_forearm, -max_roll_forearm,
+					 -max_picth_forearm, -max_yaw_forearm, -min_roll_forearm,
+					 -min_pitch_forearm, -min_yaw_forearm, -amplitude_roll_forearm,
+					 -amplitude_pitch_forearm, -amplitude_yaw_forearm,
+					 -var_accel_forearm, -avg_roll_forearm , -stddev_roll_forearm,
+					 -var_roll_forearm, -avg_pitch_forearm, -stddev_pitch_forearm,
+					 -var_pitch_forearm, -avg_yaw_forearm, -stddev_yaw_forearm, 
+					 -var_yaw_forearm) %>%
+		select(-user_name,
+					-raw_timestamp_part_1,
+					-raw_timestamp_part_2,
+					-cvtd_timestamp, -new_window,
+					-num_window)
+	return(df)
+}
+df <- remove_na_vars(df)
+validation <- remove_na_vars(validation)
+```
+
+The next thing that I have done was to split up the "pml-training" dataset into a training and testing set. Since machine learning can easily lead to overfitting, I have decided to try to prevent this by splitting the file into a training and testing set to be able to check model performance before using it on the "pml-testing" dataset. The latter is used for scoring in the course but it is rather a validation set in my scenario this way.
+
+```{r}
+set.seed(437395)
+training_ids <- createDataPartition(df$X,
+																		p = 0.8,
+																		list = FALSE)
+training <- df %>%
+	filter(row_number() %in% training_ids) %>%
+	select(-X)
+testing <- df %>%
+	filter(!(row_number() %in% training_ids)) %>%
+	select(-X)
+```
+
+
+Outliers have not been searched for as I have first wanted to quickly experiment with the data and come back to this point if it happened to become an issue. It turned out that it was not needed.
+
+The same is true for Principal Component Analysis. I have started model building by extracting information from the remaining 53 variables but it turned out to be not needed so I have not included that in this paper.
+
+<!-- The first difficulty to tackle is that there are too many variables. One could start out without taking this into consideration, however it may be worth exploring whether information can be extracted from the remaining 53 variables of the dataset by creating principal components. First, I have learned that before using PCA the dataset shall be standardized to care for an equal chance for every variable to get into the chosen set. Then I will try to extract data per sensor, then by extracting data per data type like average acceleration. As PCA could grab 95 percent of the variance with 25 components I have experimented with lower values than that. -->
+
+<!-- ```{r} -->
+<!-- # tmp_store <- training %>% -->
+<!-- # 	select(classe) -->
+<!-- # training <- training %>% -->
+<!-- # 	select(-classe) -->
+<!-- #it will be applied in this order -->
+<!-- for(i in seq(from = 0.6, to = 0.95, by = 0.05)) { -->
+<!--      a <- preProcess(x = (training %>% select(-classe)), -->
+<!--                      method = c("center", -->
+<!--                                 "scale", -->
+<!--                                 "pca"), -->
+<!--                    thres = i) -->
+<!--      print(paste(i, " - ", ncol(a$rotation), sep = "")) -->
+<!-- } -->
+<!-- pre_process_info <- preProcess(x = (training %>% select(-classe)), -->
+<!-- 											 				 method = c("center", -->
+<!-- 											 				 					 "scale", -->
+<!-- 											 				 					 "pca"), -->
+<!-- 															 thres = 0.7) -->
+
+<!-- ``` -->
+
+# Modeling
+
+Having cleaned the dataset the actual modeling can begin. I have tried many models but in the end I have sticked with only one - random forests. The reason for this is that either their performance was not adequate or they took an enormous time to simulate over and over again while tuning the parameters. As some class mates have pointed out to use randomForest directly without caret I have given it a try and it has worked flawlessly.
+
+## Random forests
+
+```{r cache = TRUE}
+fit <- randomForest(y = training$classe,
+										x = training %>% select(-classe),
+										ytest = testing$classe,
+										xtest = testing %>% select(-classe),
+										ntree = 100,
+										keep.forest = TRUE)
+```
+
+The random forest model performed surprisingly well. Using an 80:20 dataset split for cross validation the error rate was 0.41% on the test set. This is more than enough for such a model, therefore I had good hopes that it would perform well on the validation set, which it did with 100 percent.
+
+```{r}
+df <- data.frame(fit$importance,
+								 Variable = rownames(fit$importance))
+df <- df %>%
+	arrange(-MeanDecreaseGini) %>%
+	slice(1:5)
+print(df)
+```
+
+Observing the most important variables it is visible that hip movement (or stabilization) is the most critical when it comes to carrying out the exercises properly. If it were not so then the belt sensor would play a smaller role in deciding the activities' classes.
+<!-- ## Tree based prediction -->
+<!-- ```{r} -->
+<!-- fit <- train(classe ~ ., data = training,  -->
+<!-- 						 method="rpart") -->
+<!-- fit$results -->
+<!-- ``` -->
+
+<!-- The best model has reached an accuracy of ```fit$results$Accuracy[[1]]```, which is not that good. -->
+
+<!-- ##Bagging -->
+<!-- ```{r} -->
+<!-- #fit1 <- train(classe ~ ., data = training, method="bagEarth") -->
+<!-- fit2 <- train(classe ~ ., data = training, method="treebag") -->
+<!-- fit2_shuffled <- train(classe ~ ., data = training_shuffled, method="treebag") -->
+<!-- #fit3 <- train(classe ~ ., data = training, method="bagFDA") -->
+<!-- #fit1$results -->
+<!-- saveRDS(object = fit2, file = "fit2.rds") -->
+<!-- saveRDS(object = fit2_shuffled, file = "fit2_shuffled.rds") -->
+<!-- fit2$results -->
+<!-- #fit3$results -->
+<!-- pred2 <- predict(pre_process_info, fit2) -->
+<!-- pred2_shuffled <- predict(newdata = testing, fit2_shuffled) -->
+<!-- confusionMatrix(data = pred2, reference = testing$classe) -->
+<!-- confusionMatrix(data = pred2_shuffled, reference = testing$classe) -->
+<!-- ``` -->
+
+
+```{r echo = FALSE}
+chosen_model <- fit
+answers <- predict(newdata = validation, chosen_model)
+pml_write_files = function(x){
+  n = length(x)
+  for(i in 1:n){
+    filename = paste0("problem_id_",i,".txt")
+    write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+  }
+}
+
+pml_write_files(answers)
+```
